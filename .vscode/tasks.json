@@ -1,0 +1,45 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Frontend",
+      "type": "shell",
+      "command": "powershell", 
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "presentation": {
+        "panel": "new",
+        "reveal": "always",
+        "echo": true
+      },
+      "icon": {
+        "id": "vm",
+        "color": "terminal.ansiBlue"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "Backend",
+      "type": "shell",
+      "command": "powershell", 
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "presentation": {
+        "panel": "new",
+        "reveal": "always",
+        "echo": true
+      },
+      "icon": {
+        "id": "server",
+        "color": "terminal.ansiGreen"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    }
+  ]
+}
