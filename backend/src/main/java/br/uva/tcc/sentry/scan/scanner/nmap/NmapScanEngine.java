@@ -1,5 +1,6 @@
 package br.uva.tcc.sentry.scan.scanner.nmap;
 
+import br.uva.tcc.sentry.finding.domain.Host;
 import br.uva.tcc.sentry.scan.scanner.ScanEngine;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
 
@@ -32,14 +33,11 @@ public class NmapScanEngine implements ScanEngine {
 
             String xml = processExecutor.execute(command, outputFile);
 
-            resultParser.parse(xml);
+            List<Host> hosts = resultParser.parse(xml);
 
-            return new ScanResult(
-                    target,
-                    String.join(" ", command),
-                    xml,
-                    0
-            );
+            ScanResult result = new ScanResult(target, String.join(" ", command));
+            hosts.forEach(result::addHost);
+            return result;
 
         } finally {
             deleteTemporaryFile(outputFile);

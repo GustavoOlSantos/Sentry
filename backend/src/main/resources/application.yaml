@@ -1,3 +1,8 @@
 spring:
   application:
     name: sentry
+
+nvd:
+  # chave gratuita: https://nvd.nist.gov/developers/request-an-api-key
+  # sem chave funciona, mas o rate limit do NVD cai de 50 para 5 req/30s
+  api-key: ${NVD_API_KEY:}

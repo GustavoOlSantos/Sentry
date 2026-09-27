@@ -1,5 +1,7 @@
 package br.uva.tcc.sentry.scan.controller;
 
+import br.uva.tcc.sentry.scan.DTO.ScanRequest;
+import br.uva.tcc.sentry.scan.DTO.ScanResponse;
 import br.uva.tcc.sentry.scan.domain.Scan;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
 import br.uva.tcc.sentry.scan.services.ScanService;
@@ -32,8 +34,8 @@ public class ScanController{
     }
 
     @PostMapping("/exec")
-    public ScanResult executeScan(){
-       return scanService.executeScan("localhost");
+    public ScanResponse executeScan(@RequestBody ScanRequest request){
+       return scanService.executeScan(request.targets());
     }
 
 }
