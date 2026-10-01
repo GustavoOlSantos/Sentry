@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import br.uva.tcc.sentry.finding.domain.ConfigFinding;
-import br.uva.tcc.sentry.finding.domain.Host;
+import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 
 /**
  * Ponto único de entrada para rodar todas as checagens de configuração
@@ -22,7 +22,7 @@ public class ConfigFindingService {
         this.checks = checks;
     }
 
-    public List<ConfigFinding> check(Host host) {
+    public List<ConfigFinding> check(DiscoveredHost host) {
         return checks.stream()
                 .flatMap(check -> check.check(host).stream())
                 .toList();

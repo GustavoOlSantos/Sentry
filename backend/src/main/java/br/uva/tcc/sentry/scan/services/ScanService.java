@@ -6,8 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
-import br.uva.tcc.sentry.finding.domain.Host;
-import br.uva.tcc.sentry.finding.domain.PortInfo;
+import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
 import br.uva.tcc.sentry.scan.domain.Scan;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
@@ -48,10 +47,10 @@ public class ScanService {
 
         ScanResult result = scanEngine.scan(target);
 
-        for (Host host : result.getHosts()) {
+        for (DiscoveredHost host : result.getHosts()) {
             result.addConfigFindings(configFindingService.check(host));
 
-            for (PortInfo port : host.getPorts()) {
+            for (var port : host.services()) {
                 if (port.hasCpe() && port.getVersion() != null) {
                     result.addVulnerabilities(vulnerabilityLookupService.lookupByCpe(port.getCpe()));
                 }

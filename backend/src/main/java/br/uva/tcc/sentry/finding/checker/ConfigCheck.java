@@ -3,7 +3,7 @@ package br.uva.tcc.sentry.finding.checker;
 import java.util.List;
 
 import br.uva.tcc.sentry.finding.domain.ConfigFinding;
-import br.uva.tcc.sentry.finding.domain.Host;
+import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 
 /**
  * Uma checagem de configuração insegura avaliável diretamente a partir do
@@ -17,5 +17,5 @@ import br.uva.tcc.sentry.finding.domain.Host;
  */
 public interface ConfigCheck {
 
-    List<ConfigFinding> check(Host host);
+    List<ConfigFinding> check(DiscoveredHost host);
 }

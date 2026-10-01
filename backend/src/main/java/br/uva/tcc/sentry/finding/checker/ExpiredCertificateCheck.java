@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import br.uva.tcc.sentry.finding.domain.ConfigFinding;
-import br.uva.tcc.sentry.finding.domain.Host;
-import br.uva.tcc.sentry.finding.domain.PortInfo;
+import br.uva.tcc.sentry.Asset.domain.Service;
+import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 
 /**
  * Faz um handshake TLS nas portas tipicamente HTTPS (443/8443) e sinaliza
@@ -44,9 +44,9 @@ public class ExpiredCertificateCheck implements ConfigCheck {
     }
 
     @Override
-    public List<ConfigFinding> check(Host host) {
+    public List<ConfigFinding> check(DiscoveredHost host) {
         List<ConfigFinding> findings = new ArrayList<>();
-        for (PortInfo port : host.getPorts()) {
+        for (Service port : host.services()) {
             if (TLS_PORTS.contains(port.getPort())) {
                 checkCertificate(host, port).ifPresent(findings::add);
             }
@@ -54,10 +54,10 @@ public class ExpiredCertificateCheck implements ConfigCheck {
         return findings;
     }
 
-    private Optional<ConfigFinding> checkCertificate(Host host, PortInfo port) {
+    private Optional<ConfigFinding> checkCertificate(DiscoveredHost host, Service port) {
         SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
         try (SSLSocket socket = (SSLSocket) factory.createSocket()) {
-            socket.connect(new InetSocketAddress(host.getIp(), port.getPort()), handshakeTimeoutMillis);
+            socket.connect(new InetSocketAddress(host.asset().getIpAddress(), port.getPort()), handshakeTimeoutMillis);
             socket.setSoTimeout(handshakeTimeoutMillis);
             socket.startHandshake();
 
@@ -72,19 +72,19 @@ public class ExpiredCertificateCheck implements ConfigCheck {
             // Handshake pode falhar por vários motivos (host não fala TLS de fato,
             // timeout, etc.) — não é um "finding", só não conseguimos checar.
             log.debug("Não foi possível checar certificado SSL em {}:{} ({})",
-                    host.getIp(), port.getPort(), e.getMessage());
+                    host.asset().getIpAddress(), port.getPort(), e.getMessage());
             return Optional.empty();
         }
     }
 
-    private Optional<ConfigFinding> buildFindingIfNeeded(Host host, PortInfo port, X509Certificate x509) {
+    private Optional<ConfigFinding> buildFindingIfNeeded(DiscoveredHost host, Service port, X509Certificate x509) {
         Date notAfter = x509.getNotAfter();
         Date now = new Date();
 
         if (notAfter.before(now)) {
             return Optional.of(new ConfigFinding(
                     "EXPIRED_SSL_CERT",
-                    host.getIp(),
+                    host.asset().getIpAddress(),
                     port.getPort(),
                     "HIGH",
                     "Certificado SSL/TLS expirado desde " + notAfter
@@ -96,7 +96,7 @@ public class ExpiredCertificateCheck implements ConfigCheck {
         if (daysLeft <= EXPIRING_SOON_THRESHOLD_DAYS) {
             return Optional.of(new ConfigFinding(
                     "SSL_CERT_EXPIRING_SOON",
-                    host.getIp(),
+                    host.asset().getIpAddress(),
                     port.getPort(),
                     "MEDIUM",
                     "Certificado SSL/TLS expira em " + daysLeft + " dias (" + notAfter + "). Renovar com antecedência."

@@ -7,8 +7,8 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import br.uva.tcc.sentry.finding.domain.ConfigFinding;
-import br.uva.tcc.sentry.finding.domain.Host;
-import br.uva.tcc.sentry.finding.domain.PortInfo;
+import br.uva.tcc.sentry.Asset.domain.Service;
+import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 
 /**
  * Sinaliza portas de banco de dados que normalmente não deveriam estar
@@ -27,14 +27,14 @@ public class ExposedDatabasePortCheck implements ConfigCheck {
     );
 
     @Override
-    public List<ConfigFinding> check(Host host) {
+    public List<ConfigFinding> check(DiscoveredHost host) {
         List<ConfigFinding> findings = new ArrayList<>();
-        for (PortInfo port : host.getPorts()) {
+        for (Service port : host.services()) {
             String dbName = SENSITIVE_DB_PORTS.get(port.getPort());
             if (dbName != null) {
                 findings.add(new ConfigFinding(
                         "EXPOSED_DATABASE_PORT",
-                        host.getIp(),
+                        host.asset().getIpAddress(),
                         port.getPort(),
                         "HIGH",
                         "Porta de " + dbName + " (" + port.getPort() + ") acessível pela rede escaneada. "

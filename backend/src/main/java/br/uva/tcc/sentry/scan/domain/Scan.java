@@ -9,6 +9,7 @@ import lombok.Setter;
 @Getter 
 @Setter 
 public class Scan {
+    
     private UUID id;
     private String target;
     private String command;

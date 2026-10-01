@@ -1,6 +1,7 @@
 package br.uva.tcc.sentry.scan.scanner.nmap;
 
 import java.io.StringReader;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +16,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import br.uva.tcc.sentry.finding.domain.Host;
-import br.uva.tcc.sentry.finding.domain.PortInfo;
+import br.uva.tcc.sentry.Asset.domain.Asset;
+import br.uva.tcc.sentry.Asset.domain.AssetStatus;
+import br.uva.tcc.sentry.Asset.domain.Service;
+import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 
 @Component
 public class NmapResultParser {
@@ -27,7 +30,7 @@ public class NmapResultParser {
         this.cpeFormatConverter = cpeFormatConverter;
     }
 
-    public List<Host> parse(String xml) {
+    public List<DiscoveredHost> parse(String xml) {
 
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -44,12 +47,12 @@ public class NmapResultParser {
             Document doc = builder.parse(new InputSource(new StringReader(xml)));
             doc.getDocumentElement().normalize();
 
-            List<Host> hosts = new ArrayList<>();
+            List<DiscoveredHost> hosts = new ArrayList<>();
             NodeList hostNodes = doc.getElementsByTagName("host");
 
             for (int h = 0; h < hostNodes.getLength(); h++) {
                 Element hostEl = (Element) hostNodes.item(h);
-                Host host = parseHost(hostEl);
+                DiscoveredHost host = parseHost(hostEl);
                 if (host != null) {
                     hosts.add(host);
                 }
@@ -60,45 +63,70 @@ public class NmapResultParser {
         }
     }
 
-    private Host parseHost(Element hostEl) {
+    private DiscoveredHost parseHost(Element hostEl) {
         String ip = null;
+        String mac = null;
         NodeList addresses = hostEl.getElementsByTagName("address");
         for (int i = 0; i < addresses.getLength(); i++) {
             Element addr = (Element) addresses.item(i);
-            if ("ipv4".equals(addr.getAttribute("addrtype")) || "ipv6".equals(addr.getAttribute("addrtype"))) {
+            String type = addr.getAttribute("addrtype");
+            if (ip == null && ("ipv4".equals(type) || "ipv6".equals(type))) {
                 ip = addr.getAttribute("addr");
-                break;
+            } else if (mac == null && "mac".equals(type)) {
+                mac = emptyToNull(addr.getAttribute("addr"));
             }
         }
         if (ip == null) {
             return null; // host sem endereço não é útil pra gente
         }
 
-        Host host = new Host(ip);
+        Asset asset = new Asset();
+        asset.setIpAddress(ip);
+        asset.setMacAddress(mac);
+        asset.setStatus(parseAssetStatus(hostEl));
+
+        // o scan acabou de ver este asset; quem decide se é "primeira vez"
+        // ou só atualização de lastSeenAt é a camada que persiste/reconcilia
+        LocalDateTime now = LocalDateTime.now();
+        asset.setFirstSeenAt(now);
+        asset.setLastSeenAt(now);
 
         NodeList hostnameNodes = hostEl.getElementsByTagName("hostname");
         if (hostnameNodes.getLength() > 0) {
-            host.setHostname(((Element) hostnameNodes.item(0)).getAttribute("name"));
+            asset.setHostname(emptyToNull(((Element) hostnameNodes.item(0)).getAttribute("name")));
         }
 
         NodeList osMatchNodes = hostEl.getElementsByTagName("osmatch");
         if (osMatchNodes.getLength() > 0) {
-            host.setOs(((Element) osMatchNodes.item(0)).getAttribute("name"));
+            asset.setOperatingSystem(emptyToNull(((Element) osMatchNodes.item(0)).getAttribute("name")));
         }
 
+        List<Service> services = new ArrayList<>();
         NodeList portNodes = hostEl.getElementsByTagName("port");
         for (int p = 0; p < portNodes.getLength(); p++) {
             Element portEl = (Element) portNodes.item(p);
-            PortInfo portInfo = parsePort(portEl);
-            if (portInfo != null) {
-                host.addPort(portInfo);
+            Service service = parseService(portEl, asset);
+            if (service != null) {
+                services.add(service);
             }
         }
 
-        return host;
+        return new DiscoveredHost(asset, services);
     }
 
-    private PortInfo parsePort(Element portEl) {
+    /**
+     * O Nmap só diz se o host está "up" ou "down". HEALTHY/UNHEALTHY depende de
+     * análise posterior (findings), então um host que respondeu fica UNKNOWN.
+     */
+    private AssetStatus parseAssetStatus(Element hostEl) {
+        Node statusNode = firstChildNamed(hostEl, "status");
+        if (statusNode != null && "down".equals(((Element) statusNode).getAttribute("state"))) {
+            return AssetStatus.DOWN;
+        }
+        return AssetStatus.UP;
+    }
+
+    private Service parseService(Element portEl, Asset asset) {
         Node stateNode = firstChildNamed(portEl, "state");
         String state = stateNode != null ? ((Element) stateNode).getAttribute("state") : "unknown";
         if (!"open".equals(state)) {
@@ -108,13 +136,14 @@ public class NmapResultParser {
         int port = Integer.parseInt(portEl.getAttribute("portid"));
         String protocol = portEl.getAttribute("protocol");
 
-        String service = null, product = null, version = null, cpe23 = null;
+        String serviceName = null, product = null, version = null, extraInfo = null, cpe23 = null;
         Node serviceNode = firstChildNamed(portEl, "service");
         if (serviceNode != null) {
             Element serviceEl = (Element) serviceNode;
-            service = emptyToNull(serviceEl.getAttribute("name"));
+            serviceName = emptyToNull(serviceEl.getAttribute("name"));
             product = emptyToNull(serviceEl.getAttribute("product"));
             version = emptyToNull(serviceEl.getAttribute("version"));
+            extraInfo = emptyToNull(serviceEl.getAttribute("extrainfo"));
 
             NodeList cpeNodes = serviceEl.getElementsByTagName("cpe");
             if (cpeNodes.getLength() > 0) {
@@ -123,7 +152,10 @@ public class NmapResultParser {
             }
         }
 
-        return new PortInfo(port, protocol, state, service, product, version, cpe23);
+        Service service = new Service(port, protocol, state, serviceName, product, version, cpe23);
+        service.setExtraInfo(extraInfo);
+        service.setAsset(asset);
+        return service;
     }
 
     private Node firstChildNamed(Element parent, String tagName) {

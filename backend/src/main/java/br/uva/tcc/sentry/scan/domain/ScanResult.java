@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.uva.tcc.sentry.finding.domain.ConfigFinding;
-import br.uva.tcc.sentry.finding.domain.Host;
 import br.uva.tcc.sentry.vulnerability.domain.Vulnerability;
 
 import lombok.Getter;
@@ -17,7 +16,7 @@ public class ScanResult {
     private String scanId;
     private String targets;
     private final String command;
-    private List<Host> hosts = new ArrayList<>();
+    private List<DiscoveredHost> hosts = new ArrayList<>();
     private List<Vulnerability> vulnerabilities = new ArrayList<>();
     private List<ConfigFinding> configFindings = new ArrayList<>();
 
@@ -26,7 +25,7 @@ public class ScanResult {
         this.command = command;
     }
 
-    public void addHost(Host host) {
+    public void addHost(DiscoveredHost host) {
         this.hosts.add(host);
     }
 
