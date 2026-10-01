@@ -13,6 +13,7 @@ public class NmapCommandBuilder {
 
         command.add("nmap");
         command.add("-sV");
+        command.add("-O");
         command.add("-oX");
         command.add(outputFile);
         command.add(target);
