@@ -13,5 +13,6 @@ import br.uva.tcc.sentry.Asset.domain.Service;
  * o {@code Service}, como no diagrama). Fica em {@code scan.domain}
  * por ser o resultado de um scan (não é uma entidade persistida).
  */
+
 public record DiscoveredHost(Asset asset, List<Service> services) {
 }

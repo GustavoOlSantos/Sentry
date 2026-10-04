@@ -1,5 +1,6 @@
 package br.uva.tcc.sentry.finding.domain;
 
+import br.uva.tcc.sentry.scan.domain.Scan;
 import br.uva.tcc.sentry.Asset.domain.Asset;
 import br.uva.tcc.sentry.Asset.domain.Service;
 import br.uva.tcc.sentry.vulnerability.domain.Vulnerability;
@@ -22,6 +23,7 @@ import lombok.Setter;
 public class Finding {
     
     private UUID id;
+    private Scan scan;
     private Asset asset;
     private Service service;
     private Vulnerability vulnerability;

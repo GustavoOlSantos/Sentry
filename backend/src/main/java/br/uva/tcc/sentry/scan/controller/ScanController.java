@@ -3,7 +3,6 @@ package br.uva.tcc.sentry.scan.controller;
 import br.uva.tcc.sentry.scan.DTO.ScanRequest;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
 import br.uva.tcc.sentry.scan.domain.Scan;
-import br.uva.tcc.sentry.scan.domain.ScanResult;
 import br.uva.tcc.sentry.scan.services.ScanService;
 
 import java.util.ArrayList;

@@ -35,7 +35,7 @@ public class NmapScanEngine implements ScanEngine {
 
             List<DiscoveredHost> hosts = resultParser.parse(xml);
 
-            ScanResult result = new ScanResult(target, String.join(" ", command));
+            ScanResult result = new ScanResult(String.join(" ", command));
             hosts.forEach(result::addHost);
             return result;
 

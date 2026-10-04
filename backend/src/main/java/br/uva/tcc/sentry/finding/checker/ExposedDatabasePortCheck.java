@@ -6,9 +6,11 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
-import br.uva.tcc.sentry.finding.domain.ConfigFinding;
+import br.uva.tcc.sentry.finding.domain.Finding;
+import br.uva.tcc.sentry.finding.factory.FindingFactory;
 import br.uva.tcc.sentry.Asset.domain.Service;
 import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
+import br.uva.tcc.sentry.shared.domain.Severity;
 
 /**
  * Sinaliza portas de banco de dados que normalmente não deveriam estar
@@ -26,23 +28,34 @@ public class ExposedDatabasePortCheck implements ConfigCheck {
             9200, "Elasticsearch"
     );
 
+    private final FindingFactory findingFactory;
+
+    public ExposedDatabasePortCheck(FindingFactory findingFactory) {
+        this.findingFactory = findingFactory;
+    }
+
     @Override
-    public List<ConfigFinding> check(DiscoveredHost host) {
-        List<ConfigFinding> findings = new ArrayList<>();
-        for (Service port : host.services()) {
-            String dbName = SENSITIVE_DB_PORTS.get(port.getPort());
+    public List<Finding> check(DiscoveredHost host) {
+        List<Finding> findings = new ArrayList<>();
+
+        for (Service service : host.services()) {
+            String dbName = SENSITIVE_DB_PORTS.get(service.getPort());
+
             if (dbName != null) {
-                findings.add(new ConfigFinding(
+                findings.add(
+                    findingFactory.fromPolicyViolation(
+                        host,
+                        service,
+                        Severity.HIGH,
                         "EXPOSED_DATABASE_PORT",
-                        host.asset().getIpAddress(),
-                        port.getPort(),
-                        "HIGH",
-                        "Porta de " + dbName + " (" + port.getPort() + ") acessível pela rede escaneada. "
-                                + "Bancos de dados normalmente não deveriam ser expostos fora da rede interna/VPC. "
-                                + "Recomendação: restringir via firewall/security group ao IP dos servidores de aplicação."
-                ));
+                        "Porta de " + dbName + " (" + service.getPort() + ") acessível pela rede escaneada. "
+                            + "Bancos de dados normalmente não deveriam ser expostos fora da rede interna/VPC. "
+                            + "Recomendação: restringir via firewall/security group ao IP dos servidores de aplicação."
+                    )
+                );
             }
         }
+
         return findings;
     }
 }

@@ -2,7 +2,7 @@ package br.uva.tcc.sentry.finding.checker;
 
 import java.util.List;
 
-import br.uva.tcc.sentry.finding.domain.ConfigFinding;
+import br.uva.tcc.sentry.finding.domain.Finding;
 import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 
 /**
@@ -17,5 +17,5 @@ import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
  */
 public interface ConfigCheck {
 
-    List<ConfigFinding> check(DiscoveredHost host);
+    List<Finding> check(DiscoveredHost host);
 }

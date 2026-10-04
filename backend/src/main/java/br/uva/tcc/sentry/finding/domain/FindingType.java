@@ -1,6 +1,6 @@
 package br.uva.tcc.sentry.finding.domain;
 
 public enum FindingType {
-    APPLICATIONAL,
-    COMPLIANCE
+    VULNERABILITY,
+    POLICY_VIOLATION
 }
