@@ -2,10 +2,13 @@ package br.uva.tcc.sentry.scan.services;
 
 import java.util.ArrayList;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.stereotype.Service;
 
 import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
+import br.uva.tcc.sentry.finding.checker.ExpiredCertificateCheck;
 import br.uva.tcc.sentry.finding.factory.FindingFactory;
 import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
@@ -22,6 +25,8 @@ import br.uva.tcc.sentry.vulnerability.nvd.VulnerabilityLookupService;
  */
 @Service
 public class ScanService {
+
+    private static final Logger log = LoggerFactory.getLogger(ScanService.class);
 
     private final ScanEngine scanEngine;
     private final VulnerabilityLookupService vulnerabilityLookupService;
@@ -44,6 +49,8 @@ public class ScanService {
     }
 
     public ScanResponse executeScan(String target) {
+        log.info("Scan solicitado para o Host: " + target);
+
         var scan = new Scan(target);
 
         scan.ScanStarted();
@@ -67,6 +74,7 @@ public class ScanService {
 
         var response = new ScanResponse(scan, result);
         scan.markFinished();
+        log.info("Scan para o Host: " + target + " finalizado com sucesso.");
 
         return response;
     }
