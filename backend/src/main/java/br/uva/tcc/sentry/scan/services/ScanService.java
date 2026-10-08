@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
-import br.uva.tcc.sentry.finding.checker.ExpiredCertificateCheck;
 import br.uva.tcc.sentry.finding.factory.FindingFactory;
 import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
