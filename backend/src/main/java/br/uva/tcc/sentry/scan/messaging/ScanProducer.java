@@ -13,7 +13,7 @@ public class ScanProducer {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    public void enviarMensagem(String mensagem) {
-        rabbitTemplate.convertAndSend(RabbitMQConfig.SCAN_QUEUE, mensagem);
+    public void enviarMensagem(ScanMessage scanMessage) {
+        rabbitTemplate.convertAndSend(RabbitMQConfig.SCAN_QUEUE, scanMessage);
     }
 }

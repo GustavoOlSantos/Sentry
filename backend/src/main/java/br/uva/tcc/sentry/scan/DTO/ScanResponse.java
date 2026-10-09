@@ -1,8 +1,11 @@
 package br.uva.tcc.sentry.scan.DTO;
 
-import br.uva.tcc.sentry.scan.domain.ScanResult;
-import br.uva.tcc.sentry.scan.domain.Scan;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-public record ScanResponse(Scan scan, ScanResult scanResult) {
+import br.uva.tcc.sentry.scan.domain.ScanStatus;
+
+public record ScanResponse(String message, ScanStatus status, Integer hostsCount, Map<String, UUID> scanIds, List<String> failedTargets) {
     
 }

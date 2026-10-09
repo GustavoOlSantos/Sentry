@@ -2,21 +2,23 @@ package br.uva.tcc.sentry.scan.services;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.stereotype.Service;
 
-import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
-import br.uva.tcc.sentry.finding.factory.FindingFactory;
-import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
+import br.uva.tcc.sentry.scan.messaging.ScanMessage;
+import br.uva.tcc.sentry.scan.messaging.ScanProducer;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
 import br.uva.tcc.sentry.scan.domain.Scan;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
+import br.uva.tcc.sentry.scan.domain.ScanStatus;
 import br.uva.tcc.sentry.scan.scanner.ScanEngine;
-import br.uva.tcc.sentry.vulnerability.nvd.VulnerabilityLookupService;
 
 /**
  * Orquestra o ciclo completo de um scan: dispara o {@link ScanEngine}
@@ -28,17 +30,10 @@ import br.uva.tcc.sentry.vulnerability.nvd.VulnerabilityLookupService;
 public class ScanService {
 
     private static final Logger log = LoggerFactory.getLogger(ScanService.class);
-
-    private final ScanEngine scanEngine;
-    private final VulnerabilityLookupService vulnerabilityLookupService;
-    private final ConfigFindingService configFindingService;
-    private final FindingFactory findingFactory;
-
-    public ScanService(ScanEngine scanEngine, VulnerabilityLookupService vulnerabilityLookupService, ConfigFindingService configFindingService, FindingFactory findingFactory) {
-        this.scanEngine = scanEngine;
-        this.vulnerabilityLookupService = vulnerabilityLookupService;
-        this.configFindingService = configFindingService;
-        this.findingFactory = findingFactory;
+    private final ScanProducer scanProducer;
+    
+    public ScanService(ScanProducer scanProducer) {
+        this.scanProducer = scanProducer;
     }
 
     public ArrayList<Scan> findAll() {
@@ -49,45 +44,37 @@ public class ScanService {
         return new Scan();
     }
 
-    public ArrayList<ScanResponse> executeScan(String strTargets) {
-        var response = new  ArrayList<ScanResponse>();
-
+    public ScanResponse executeScan(String strTargets) {
         var targets = targetsToList(strTargets);
-        log.info("Scan solicitado para os  Hosts: " + targets);
+        
+        Map<String, UUID> scanningHosts = new HashMap<>();
+        List<String> failedTargets = new ArrayList<>();
 
-        for (String target : targets) {
-
+        log.info("Recebendo solicitação para scan dos Hosts: " + targets);
+        
+        for (String target : targets){
             var scan = new Scan(target);
+            scanProducer.enviarMensagem(new ScanMessage(scan.getId(), target));
 
-            scan.ScanStarted();
-            ScanResult result = scanEngine.scan(target);
-            scan.setCommand(result.getCommand());
-
-            for (DiscoveredHost host : result.getHosts()) {
-                result.addFindings(configFindingService.check(host, scan));
-
-                for (var service : host.services()) {
-
-                    if (service.hasCpe() && service.getVersion() != null) {
-                        var vulnerabilities = vulnerabilityLookupService.lookupByCpe(service.getCpe());
-
-                        for (var vulnerability : vulnerabilities) {
-                            result.addFinding(findingFactory.fromVulnerability(host, service, vulnerability, scan));
-                        }
-                    }
-                }
-            }
-
-            response.add(new ScanResponse(scan, result));
-            scan.markFinished();
-            log.info("Scan para o Host: " + target + " finalizado com sucesso.");
+            scanningHosts.put(scan.getTarget(), scan.getId());
         }
+        
+        ScanResponse response = new ScanResponse(
+            "Solicitações de scan aceitas para processamento.", 
+            ScanStatus.PENDING, 
+            scanningHosts.size(), 
+            scanningHosts, 
+            failedTargets);
 
         return response;
     }
 
     public List<String> targetsToList(String targets) {
-        targets = targets.replaceAll("\\s+", "");
-        return Arrays.asList(targets.split(","));
+        if (targets == null || targets.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        String[] splitTargets = targets.split("\\s*,\\s*");
+        return new ArrayList<>(new LinkedHashSet<>(Arrays.asList(splitTargets)));
     }
 }
