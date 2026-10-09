@@ -27,6 +27,11 @@ public class Scan {
         this.target = target;
     }
 
+    public Scan(UUID id, String target){
+        this.id = id;
+        this.target = target;
+    }
+
     public Scan() {
     }
 

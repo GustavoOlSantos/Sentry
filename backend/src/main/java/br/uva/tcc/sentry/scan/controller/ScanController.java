@@ -8,6 +8,7 @@ import br.uva.tcc.sentry.scan.services.ScanService;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -33,8 +34,9 @@ public class ScanController{
     }
 
     @PostMapping("/exec")
-    public ScanResponse executeScan(@RequestBody ScanRequest request){
-       return scanService.executeScan(request.targets());
+    public ResponseEntity<ScanResponse> executeScan(@RequestBody ScanRequest request){
+       ScanResponse response = scanService.executeScan(request.targets());
+       return ResponseEntity.accepted().body(response);
     }
 
 }
