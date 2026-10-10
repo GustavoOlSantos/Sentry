@@ -33,7 +33,7 @@ public class ScanController{
     }
 
     @PostMapping("/exec")
-    public ScanResponse executeScan(@RequestBody ScanRequest request){
+    public ArrayList<ScanResponse> executeScan(@RequestBody ScanRequest request){
        return scanService.executeScan(request.targets());
     }
 

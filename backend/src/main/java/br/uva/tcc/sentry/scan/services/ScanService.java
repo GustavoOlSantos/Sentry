@@ -1,6 +1,8 @@
 package br.uva.tcc.sentry.scan.services;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
-import br.uva.tcc.sentry.finding.checker.ExpiredCertificateCheck;
 import br.uva.tcc.sentry.finding.factory.FindingFactory;
 import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
@@ -48,34 +49,45 @@ public class ScanService {
         return new Scan();
     }
 
-    public ScanResponse executeScan(String target) {
-        log.info("Scan solicitado para o Host: " + target);
+    public ArrayList<ScanResponse> executeScan(String strTargets) {
+        var response = new  ArrayList<ScanResponse>();
 
-        var scan = new Scan(target);
+        var targets = targetsToList(strTargets);
+        log.info("Scan solicitado para os  Hosts: " + targets);
 
-        scan.ScanStarted();
-        ScanResult result = scanEngine.scan(target);
-        scan.setCommand(result.getCommand());
+        for (String target : targets) {
 
-        for (DiscoveredHost host : result.getHosts()) {
-            result.addFindings(configFindingService.check(host, scan));
+            var scan = new Scan(target);
 
-            for (var service : host.services()) {
+            scan.ScanStarted();
+            ScanResult result = scanEngine.scan(target);
+            scan.setCommand(result.getCommand());
 
-                if (service.hasCpe() && service.getVersion() != null) {
-                    var vulnerabilities = vulnerabilityLookupService.lookupByCpe(service.getCpe());
+            for (DiscoveredHost host : result.getHosts()) {
+                result.addFindings(configFindingService.check(host, scan));
 
-                    for (var vulnerability : vulnerabilities) {
-                        result.addFinding(findingFactory.fromVulnerability(host, service, vulnerability, scan));
+                for (var service : host.services()) {
+
+                    if (service.hasCpe() && service.getVersion() != null) {
+                        var vulnerabilities = vulnerabilityLookupService.lookupByCpe(service.getCpe());
+
+                        for (var vulnerability : vulnerabilities) {
+                            result.addFinding(findingFactory.fromVulnerability(host, service, vulnerability, scan));
+                        }
                     }
                 }
             }
+
+            response.add(new ScanResponse(scan, result));
+            scan.markFinished();
+            log.info("Scan para o Host: " + target + " finalizado com sucesso.");
         }
 
-        var response = new ScanResponse(scan, result);
-        scan.markFinished();
-        log.info("Scan para o Host: " + target + " finalizado com sucesso.");
-
         return response;
+    }
+
+    public List<String> targetsToList(String targets) {
+        targets = targets.replaceAll("\\s+", "");
+        return Arrays.asList(targets.split(","));
     }
 }
