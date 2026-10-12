@@ -120,3 +120,34 @@ code {
   padding: 4px 8px;
   background: var(--bg-surface);
 }
+
+.btn {
+  font-size: 12pt;
+  font-weight: 500;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  align-items: center;
+  cursor: pointer;
+
+  transition: all .5s ease-in-out;
+
+  &.primary{
+    background-color: var(--brand-primary);
+    color: var(--text-primary);
+
+    &:hover{
+      background-color: var(--brand-hover);
+      border-color: var(--brand-primary);
+    }
+  }
+  &.secondary{
+    background-color: var(--brand-secondary);
+    color: var(--text-primary);
+
+    &:hover{
+      background-color: var(--brand-secondary-hover);
+      border-color: var(--brand-secondary);
+    }
+  }
+}
