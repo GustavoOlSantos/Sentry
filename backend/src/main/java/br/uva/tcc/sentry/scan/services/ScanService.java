@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.amqp.AmqpException;
 import org.springframework.stereotype.Service;
 
 import br.uva.tcc.sentry.scan.messaging.ScanMessage;
@@ -47,24 +47,44 @@ public class ScanService {
     public ScanResponse executeScan(String strTargets) {
         var targets = targetsToList(strTargets);
         
+        String responseMessage = "Solicitações de scan aceitas para processamento.";
+        ScanStatus status = ScanStatus.PENDING;
+        String exception = null;
         Map<String, UUID> scanningHosts = new HashMap<>();
         List<String> failedTargets = new ArrayList<>();
 
-        log.info("Recebendo solicitação para scan dos Hosts: " + targets);
+        log.info("Recebendo solicitação para scan dos Hosts: {}", targets);
         
         for (String target : targets){
             var scan = new Scan(target);
-            scanProducer.enviarMensagem(new ScanMessage(scan.getId(), target));
 
-            scanningHosts.put(scan.getTarget(), scan.getId());
+            try {
+                scanProducer.enviarMensagem(new ScanMessage(scan.getId(), target));
+                scanningHosts.put(scan.getTarget(), scan.getId());
+            } catch (AmqpException e) {
+                log.error("Falha ao enviar a solicitação de scan ao RabbitMQ: {}", e.getMessage(), e);
+                exception = e.getMessage();
+                failedTargets.add(target);
+            }    
         }
-        
+
+        if (!failedTargets.isEmpty()) {
+            responseMessage = scanningHosts.isEmpty()
+                ? "Nenhuma solicitação de scan foi enviada para processamento."
+                : "Nem todas as solicitações foram enviadas para processamento.";
+
+                if (scanningHosts.isEmpty()) {
+                    status = ScanStatus.FAILED;
+                }
+        }
+
         ScanResponse response = new ScanResponse(
-            "Solicitações de scan aceitas para processamento.", 
-            ScanStatus.PENDING, 
-            scanningHosts.size(), 
+            responseMessage, 
+            status, 
+            targets.size(), 
             scanningHosts, 
-            failedTargets);
+            failedTargets,
+            exception);
 
         return response;
     }
