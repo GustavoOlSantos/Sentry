@@ -16,6 +16,7 @@ import br.uva.tcc.sentry.scan.messaging.ScanMessage;
 import br.uva.tcc.sentry.scan.messaging.ScanProducer;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
 import br.uva.tcc.sentry.scan.domain.Scan;
+import br.uva.tcc.sentry.scan.domain.ScanExecutionGroup;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
 import br.uva.tcc.sentry.scan.domain.ScanStatus;
 import br.uva.tcc.sentry.scan.scanner.ScanEngine;
@@ -46,20 +47,22 @@ public class ScanService {
 
     public ScanResponse executeScan(String strTargets) {
         var targets = targetsToList(strTargets);
+        var scanGroup = new ScanExecutionGroup();
         
         String responseMessage = "Solicitações de scan aceitas para processamento.";
         ScanStatus status = ScanStatus.PENDING;
         String exception = null;
         Map<String, UUID> scanningHosts = new HashMap<>();
-        List<String> failedTargets = new ArrayList<>();
+        List<String> failedTargets = new ArrayList<>();        
 
         log.info("Recebendo solicitação para scan dos Hosts: {}", targets);
         
         for (String target : targets){
-            var scan = new Scan(target);
+            var scan = new Scan(target, scanGroup);
+            scanGroup.addScan(scan);
 
             try {
-                scanProducer.enviarMensagem(new ScanMessage(scan.getId(), target));
+                scanProducer.enviarMensagem(new ScanMessage(scan.getId(), target, scanGroup.getId()));
                 scanningHosts.put(scan.getTarget(), scan.getId());
             } catch (AmqpException e) {
                 log.error("Falha ao enviar a solicitação de scan ao RabbitMQ: {}", e.getMessage(), e);
@@ -80,6 +83,7 @@ public class ScanService {
 
         ScanResponse response = new ScanResponse(
             responseMessage, 
+            scanGroup.getId(),
             status, 
             targets.size(), 
             scanningHosts, 

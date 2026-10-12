@@ -1,6 +1,7 @@
 package br.uva.tcc.sentry.scan.messaging;
 
 import br.uva.tcc.sentry.scan.domain.Scan;
+import br.uva.tcc.sentry.scan.domain.ScanExecutionGroup;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
 import br.uva.tcc.sentry.scan.domain.ScanStatus;
 import br.uva.tcc.sentry.scan.services.ScanService;
@@ -38,24 +39,35 @@ public class ScanConsumer {
     @RabbitListener(queues = RabbitMQConfig.SCAN_QUEUE)
     public void consumirMensagem(ScanMessage scanRequestReceived) {
 
-        log.info("================================================");
-        log.info("Host: " + scanRequestReceived.target());
-        log.info("Scan ID: " + scanRequestReceived.scanId());
-        log.info("================================================");
+        /* TODO: Finalizar o  Fluxo de ScanGroup quando a persistência estiver configurada
+         - obter Scangroup pelo id no banco de dados
+         - Verificar se esse é o primeiro scan do grupo a ser executado e mudar os status pra running
+         - Seta o startedAt
+         - Salvar no banco
+         - Verifique se ainda existe algum scan do grupo em estado não terminal. Se não existir, finalize o grupo
+        */
 
         Scan scan = new Scan(scanRequestReceived.scanId(), scanRequestReceived.target());
         scan.ScanStarted();
-        scan.setStatus(ScanStatus.RUNNING);
 
-        ScanResult result = scanEngine.scan(scan.getTarget());
-        scan.setCommand(result.getCommand());
+        try {
+            log.info("Iniciando scan. ID: {}, Host: {}", scanRequestReceived.scanId(), scanRequestReceived.target());
 
-        for (DiscoveredHost host : result.getHosts()) {
-            result.addFindings(configFindingService.check(host, scan));
+            ScanResult result = scanEngine.scan(scan.getTarget());
+            scan.setCommand(result.getCommand());
 
-            for (var service : host.services()) {
+            if (result.getHosts().isEmpty()) {
+                log.warn("Nenhum host encontrado. Scan ID: {}, Target: {}", scan.getId(), scan.getTarget());
+            }
 
-                if (service.hasCpe() && service.getVersion() != null) {
+            for (DiscoveredHost host : result.getHosts()) {
+                result.addFindings(configFindingService.check(host, scan));
+
+                for (var service : host.services()) {
+                    if (!service.hasCpe() || service.getVersion() == null) {
+                        continue;
+                    }
+
                     var vulnerabilities = vulnerabilityLookupService.lookupByCpe(service.getCpe());
 
                     for (var vulnerability : vulnerabilities) {
@@ -63,13 +75,14 @@ public class ScanConsumer {
                     }
                 }
             }
+
+            scan.markFinished();
+            log.info("Scan finalizado com sucesso. ID: {}, Host: {}", scanRequestReceived.scanId(), scanRequestReceived.target());
+
+        } catch (Exception e) {
+            scan.markFailed();
+
+            log.error("Falha ao executar scan. ID: {}, Host: {}", scanRequestReceived.scanId(), scanRequestReceived.target(), e);
         }
-
-        scan.markFinished();
-
-        log.info("================================================");
-        log.info("Scan Finalizado com sucesso!");
-        log.info("Host: " + scanRequestReceived.target());
-        log.info("================================================");
     }
 }

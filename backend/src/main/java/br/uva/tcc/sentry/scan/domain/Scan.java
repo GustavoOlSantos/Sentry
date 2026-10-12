@@ -11,6 +11,7 @@ import lombok.Setter;
 public class Scan {
     
     private UUID id;
+    private ScanExecutionGroup execGroup;
     private String target;
     private String command;
     private ScanStatus status;
@@ -23,6 +24,15 @@ public class Scan {
         this.id = UUID.randomUUID();
         this.status = ScanStatus.PENDING;
         this.createdAt = LocalDateTime.now();
+
+        this.target = target;
+    }
+
+    public Scan(String target, ScanExecutionGroup execGroup){
+        this.id = UUID.randomUUID();
+        this.status = ScanStatus.PENDING;
+        this.createdAt = LocalDateTime.now();
+        this.execGroup = execGroup;
 
         this.target = target;
     }
@@ -43,5 +53,15 @@ public class Scan {
     public void markFinished() {
         this.finishedAt = LocalDateTime.now();
         this.status = ScanStatus.COMPLETED;
+    }
+
+    public void markFailed() {
+        this.finishedAt = LocalDateTime.now();
+        this.status = ScanStatus.FAILED;
+    }
+
+    public void markCanceled() {
+        this.finishedAt = LocalDateTime.now();
+        this.status = ScanStatus.CANCELLED;
     }
 }

@@ -10,9 +10,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 public class NmapScanEngine implements ScanEngine {
+
+    private static final Logger log = LoggerFactory.getLogger(NmapScanEngine.class);
 
     private final NmapCommandBuilder commandBuilder;
     private final NmapProcessExecutor processExecutor;
@@ -48,7 +52,7 @@ public class NmapScanEngine implements ScanEngine {
         try {
             return Files.createTempFile("nmap-" + UUID.randomUUID(), ".xml");
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to create temporary Nmap output file", e);
+            throw new IllegalStateException("Falha ao criar o arquivo temporário de saída do Nmap", e);
         }
     }
 
