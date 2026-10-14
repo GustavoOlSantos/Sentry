@@ -4,6 +4,7 @@ Plataforma de varredura de ativos, identificação de vulnerabilidades e verific
 
 <div align="center">
   <img src="https://skillicons.dev/icons?i=react,java,spring,rabbitmq,javascript,html,css,mysql" />
+  <img height="40px" src="https://upload.wikimedia.org/wikipedia/commons/7/73/Logo_nmap.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original" />
 </div>
 
 ---
