@@ -1,6 +1,8 @@
 package br.uva.tcc.sentry.scan.domain;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -15,6 +17,7 @@ public class Scan {
     private String target;
     private String command;
     private ScanStatus status;
+    private List<String> warnings = new ArrayList<>();
     private String errorMessage;
     private LocalDateTime createdAt;
     private LocalDateTime startedAt;
@@ -60,8 +63,20 @@ public class Scan {
         this.status = ScanStatus.FAILED;
     }
 
+    public void markNotFounded() {
+        this.finishedAt = LocalDateTime.now();
+        this.status = ScanStatus.NOT_FOUND;
+    }
+
     public void markCanceled() {
         this.finishedAt = LocalDateTime.now();
         this.status = ScanStatus.CANCELLED;
     }
+
+    public void addWarning(String warning){
+        if (warning != null && !warning.isBlank()) {
+            warnings.add(warning);
+        }   
+    }
+
 }

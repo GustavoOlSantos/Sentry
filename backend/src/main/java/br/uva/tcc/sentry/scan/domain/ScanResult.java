@@ -39,4 +39,51 @@ public class ScanResult {
         this.findings.addAll(findings);
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("\n========== SCAN RESULT ==========\n")
+        .append("Scan ID: ").append(scanId).append('\n')
+        .append("Comando: ").append(command).append('\n');
+
+        sb.append("\n--- Hosts encontrados (")
+        .append(hosts.size()).append(") ---\n");
+
+        if (hosts.isEmpty()) {
+            sb.append("Nenhum host encontrado.\n");
+        } else {
+            for (int i = 0; i < hosts.size(); i++) {
+                sb.append(i + 1).append(". ")
+                .append(hosts.get(i)).append('\n');
+            }
+        }
+
+        sb.append("\n--- Findings (")
+        .append(findings.size()).append(") ---\n");
+
+        if (findings.isEmpty()) {
+            sb.append("Nenhum finding encontrado.\n");
+        } else {
+            for (int i = 0; i < findings.size(); i++) {
+                sb.append(i + 1).append(". ")
+                .append(findings.get(i)).append('\n');
+            }
+        }
+
+        sb.append("\n--- Vulnerabilidades (")
+        .append(vulnerabilities.size()).append(") ---\n");
+
+        if (vulnerabilities.isEmpty()) {
+            sb.append("Nenhuma vulnerabilidade encontrada.\n");
+        } else {
+            for (int i = 0; i < vulnerabilities.size(); i++) {
+                sb.append(i + 1).append(". ")
+                .append(vulnerabilities.get(i)).append('\n');
+            }
+        }
+
+        return sb.append("=================================\n").toString();
+    }
+
 }

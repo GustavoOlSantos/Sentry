@@ -58,6 +58,10 @@ public class ScanConsumer {
 
             if (result.getHosts().isEmpty()) {
                 log.warn("Nenhum host encontrado. Scan ID: {}, Target: {}", scan.getId(), scan.getTarget());
+                scan.addWarning("O Host não foi encontrado para o endereço informado");
+                scan.markNotFounded();
+                
+                return;
             }
 
             for (DiscoveredHost host : result.getHosts()) {
@@ -68,9 +72,14 @@ public class ScanConsumer {
                         continue;
                     }
 
-                    var vulnerabilities = vulnerabilityLookupService.lookupByCpe(service.getCpe());
+                    var lookupResult = vulnerabilityLookupService.lookupByCpe(service.getCpe());
 
-                    for (var vulnerability : vulnerabilities) {
+                    if (!lookupResult.successful()) {
+                        scan.addWarning(lookupResult.errorMessage());
+                        continue;
+                    }
+
+                    for (var vulnerability : lookupResult.vulnerabilities()) {
                         result.addFinding(findingFactory.fromVulnerability(host, service, vulnerability, scan));
                     }
                 }
