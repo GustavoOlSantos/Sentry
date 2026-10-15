@@ -5,8 +5,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -25,8 +23,6 @@ import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 
 @Component
 public class NmapResultParser {
-
-    private static final Logger log = LoggerFactory.getLogger(NmapScanEngine.class);
     private final CpeFormatConverter cpeFormatConverter;
 
     public NmapResultParser(CpeFormatConverter cpeFormatConverter) {
