@@ -2,7 +2,6 @@ package br.uva.tcc.sentry.scan.domain;
 
 import br.uva.tcc.sentry.Asset.domain.Asset;
 
-import java.util.UUID;
 import java.time.LocalDateTime;
 
 import lombok.Getter;
@@ -12,7 +11,7 @@ import lombok.Setter;
 @Setter
 public class ScanAsset {
     
-    UUID id;
+    Long id;
     Scan scan;
     Asset asset;
     LocalDateTime discoveredAt;

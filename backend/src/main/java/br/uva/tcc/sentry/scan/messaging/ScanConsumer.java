@@ -1,9 +1,7 @@
 package br.uva.tcc.sentry.scan.messaging;
 
 import br.uva.tcc.sentry.scan.domain.Scan;
-import br.uva.tcc.sentry.scan.domain.ScanExecutionGroup;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
-import br.uva.tcc.sentry.scan.domain.ScanStatus;
 import br.uva.tcc.sentry.scan.services.ScanService;
 
 import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
@@ -82,6 +80,9 @@ public class ScanConsumer {
                     for (var vulnerability : lookupResult.vulnerabilities()) {
                         result.addFinding(findingFactory.fromVulnerability(host, service, vulnerability, scan));
                     }
+
+                    // TODO: Salvar as finding, services no Banco
+                    // TODO: Salvar cada vulnerability (Em finding) separada no banco de dados, checando se essa vulnerability já não existe no BD
                 }
             }
 

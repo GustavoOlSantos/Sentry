@@ -1,6 +1,5 @@
 package br.uva.tcc.sentry.policy.domain;
 
-import java.util.UUID;
 import java.time.LocalDateTime;
 
 import lombok.Getter;
@@ -15,7 +14,7 @@ import lombok.Setter;
 @Setter 
 public class Policy {
 
-    private UUID id;
+    private Long id;
     private String name;
     private String description;
     private PolicyStatus status;
