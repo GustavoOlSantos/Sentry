@@ -12,6 +12,20 @@ docker run -d --name sentry-rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-mana
 - Senha e user padrao: guest (desenvolvimento)
 
 ## Comando para executar o React
+
 ```
 npm run dev
 ```
+
+## Lab de testes do Scan
+
+- Subir imagem: (primeira vez demora um pouco)
+    ```
+    docker compose up -d 
+    ```
+- Confirmar que subiu: 
+    ```
+    docker ps
+    ```
+- apontar scan para: `{ "targets": "127.0.0.1" }`
+- SEMPRE DERRUBAR APÓS O TÉRMINO DOS TESTES = `docker compose down`
