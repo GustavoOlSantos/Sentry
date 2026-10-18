@@ -1,0 +1,362 @@
+.home {
+    margin-top: 20px;
+    display: flex;
+    gap: 20px;
+    height: calc(100vh - 70px);
+}
+
+h3{
+    margin-top: 0px;
+}
+
+.section {
+    background-color: var(--bg-sidebar);
+    border-radius: 8px;
+    padding: 10px 0px;
+}   
+
+.home_sidebar {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0px;
+    
+    min-width: 380px;
+    max-width: 450px;
+    max-height: 80vh;
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        align-self: stretch;
+    }
+
+    li {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        width: 100%;
+        box-sizing: border-box;
+
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 10px 20px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: color 0.2s ease-in-out;
+
+        i {
+            color: var(--text-muted);
+            transition: color 0.2s ease-in-out;
+        }
+
+        &:hover {
+            color: var(--text-primary);
+
+            i {
+                color: var(--brand-secondary-hover);
+            }
+        }
+
+        &:hover::before {
+            transform: scaleX(1);
+        }
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: var(--bg-surface-hover);
+            border-radius: inherit;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease-in;
+            z-index: -1;
+        }        
+    }
+
+    li.active {
+        font-weight: 600;
+        color: var(--text-primary);
+
+        i {
+            color: var(--brand-secondary);
+        }
+    }
+
+}
+
+
+.overview {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: calc(100% - 420px);
+
+    .overview_content {
+        display: flex;
+        align-items: stretch;
+        gap: 16px;
+        width: 100%;
+    }
+
+    .overview_stats {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .home_cards {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+
+        p {
+            margin: 0;
+            font-size: 12pt;
+            color: var(--text-muted);
+        }
+
+        h3 {
+            margin: 0;
+            font-size: 25pt;
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+
+        h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+    }
+
+    .assets_progress {
+        width: 100%;
+        height: 7px;
+        margin-top: 5px;
+        display: flex;
+        overflow: hidden;
+        border-radius: 10px;
+        background: var(--bg-surface-hover);
+    }
+
+    .assets_progress_infr {
+        display: block;
+        height: 100%;
+        background: var(--brand-primary);
+        transition: width 0.6s ease;
+    }
+
+    .assets_progress_app {
+        display: block;
+        height: 100%;
+        background: var(--brand-secondary);
+        transition: width 0.6s ease;
+    }
+
+    .assets_card small {
+        color: var(--text-muted);
+        font-size: 11px;
+    }
+
+    .overview_stats ul {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 0;
+        margin: 8px 0 0;
+        list-style: none;
+
+        span {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        li {
+            font-size: 13pt;
+            color: var(--text-muted);
+        }
+
+        .blue-bullet::before,
+        .purple-bullet::before {
+            content: "";
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            margin-right: 10px;
+            border-radius: 50%;
+        }
+
+        .blue-bullet::before {
+            background: var(--brand-primary);
+        }
+
+        .purple-bullet::before {
+            background: var(--brand-secondary);
+        }
+    }
+
+    .pizza {
+        flex: 1.2;
+        min-width: 0;
+        align-self: stretch;
+    }
+
+    .vulnerability_chart {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 24px;
+        padding: 12px 0;
+    }
+
+    .vulnerability_donut {
+        width: 195px;
+        aspect-ratio: 1;
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        position: relative;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: inherit;
+            transition: transform 0.3s ease;
+        }
+
+        &:hover::before {
+            transform: scale(1.03);
+        }
+    }
+
+    .donut_center {
+        position: relative;
+        z-index: 1;
+        width: 65%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: var(--bg-sidebar);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+
+        strong {
+            font-size: 24px;
+            color: var(--text-primary);
+        }
+
+        p {
+            max-width: 90%;
+            text-align: center;
+            font-size: 11pt;
+            color: var(--text-muted);
+        }
+    }
+
+    .vulnerability_legend {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        min-width: 120px;
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        strong {
+            margin-left: auto;
+            color: var(--text-primary);
+        }
+    }
+
+    .legend_color {
+        width: 10px;
+        height: 10px;
+        flex-shrink: 0;
+        border-radius: 3px;
+
+        &.low {
+            background: var(--severity-low);
+        }
+
+        &.medium {
+            background: var(--severity-medium);
+        }
+
+        &.high {
+            background: var(--severity-high);
+        }
+
+        &.critical {
+            background: var(--severity-critical);
+        }
+        &.resolved {
+            background: var(--severity-info);
+        }
+    }
+
+    .resolved_count {
+        padding-top: 10px;
+        border-top: 1px solid var(--border-subtle);
+        font-size: 12px;
+    }
+}
+
+.actions{
+    width: 100%;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    .btn {
+        width: 50%;
+    }
+}
+
+@media (max-width: 1100px) {
+    .overview {
+        width: 100%;
+
+        .overview_content {
+            flex-direction: column;
+        }
+
+        .vulnerability_chart {
+            justify-content: flex-start;
+        }
+    }
+}
+
+@media (max-width: 500px) {
+    .overview .vulnerability_chart {
+        flex-direction: column;
+        align-items: center;
+    }
+}

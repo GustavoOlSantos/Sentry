@@ -43,3 +43,5 @@ backend/src/main/resources/application.properties
 *.iml
 *.ipr
 *.iws
+
+.txt
