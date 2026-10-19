@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +17,9 @@ import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
 import br.uva.tcc.sentry.scan.domain.Scan;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
+import br.uva.tcc.sentry.scan.exception.UnauthorizedTargetException;
 import br.uva.tcc.sentry.scan.scanner.ScanEngine;
+import br.uva.tcc.sentry.scan.validation.TargetValidator;
 import br.uva.tcc.sentry.vulnerability.nvd.VulnerabilityLookupService;
 
 /**
@@ -33,12 +37,16 @@ public class ScanService {
     private final VulnerabilityLookupService vulnerabilityLookupService;
     private final ConfigFindingService configFindingService;
     private final FindingFactory findingFactory;
+    private final TargetValidator targetValidator;
 
-    public ScanService(ScanEngine scanEngine, VulnerabilityLookupService vulnerabilityLookupService, ConfigFindingService configFindingService, FindingFactory findingFactory) {
+    public ScanService(ScanEngine scanEngine, VulnerabilityLookupService vulnerabilityLookupService,
+            ConfigFindingService configFindingService, FindingFactory findingFactory,
+            TargetValidator targetValidator) {
         this.scanEngine = scanEngine;
         this.vulnerabilityLookupService = vulnerabilityLookupService;
         this.configFindingService = configFindingService;
         this.findingFactory = findingFactory;
+        this.targetValidator = targetValidator;
     }
 
     public ArrayList<Scan> findAll() {
@@ -86,8 +94,27 @@ public class ScanService {
         return response;
     }
 
+    /**
+     * Converte a string recebida em {@code targets} numa lista de hosts,
+     * rejeitando qualquer entrada que não seja um IPv4, IPv6 ou range CIDR
+     * válido. Isso impede que alguém use esse campo para injetar flags ou
+     * argumentos extras no comando do Nmap (ex.: "127.0.0.1 --script=...").
+     */
     public List<String> targetsToList(String targets) {
         targets = targets.replaceAll("\\s+", "");
-        return Arrays.asList(targets.split(","));
+        List<String> list = Arrays.asList(targets.split(","));
+
+        List<String> invalid = list.stream()
+                .filter(target -> !targetValidator.isValid(target))
+                .collect(Collectors.toList());
+
+        if (!invalid.isEmpty()) {
+            log.warn("Tentativa de scan com targets inválidos: " + invalid);
+            throw new UnauthorizedTargetException(
+                    "Entrada inválida em 'targets': " + String.join(", ", invalid)
+                            + ". Apenas IPv4, IPv6 ou notação CIDR (IP/prefixo) são aceitos.");
+        }
+
+        return list;
     }
 }
