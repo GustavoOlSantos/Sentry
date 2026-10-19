@@ -20,6 +20,7 @@ import br.uva.tcc.sentry.Asset.domain.Asset;
 import br.uva.tcc.sentry.Asset.domain.AssetStatus;
 import br.uva.tcc.sentry.Asset.domain.Service;
 import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
+import br.uva.tcc.sentry.scan.exception.PermanentScanException;
 
 @Component
 public class NmapResultParser {
@@ -58,7 +59,7 @@ public class NmapResultParser {
             }
             return hosts;
         } catch (Exception e) {
-            throw new IllegalStateException("Falha ao interpretar o XML de saída do Nmap", e);
+            throw new PermanentScanException("Falha ao interpretar o XML de saída do Nmap", e);
         }
     }
 
