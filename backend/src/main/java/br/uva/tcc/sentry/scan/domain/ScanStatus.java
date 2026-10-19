@@ -6,5 +6,9 @@ public enum ScanStatus {
     COMPLETED,
     FAILED,
     NOT_FOUND,
-    CANCELLED
+    CANCELLED,
+    /* Scan GroupException */
+    ACCEPTED,
+    PARTIAL,
 }
+

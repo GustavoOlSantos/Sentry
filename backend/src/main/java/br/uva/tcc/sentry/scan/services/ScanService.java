@@ -14,11 +14,14 @@ import org.springframework.stereotype.Service;
 
 import br.uva.tcc.sentry.scan.messaging.ScanMessage;
 import br.uva.tcc.sentry.scan.messaging.ScanProducer;
+import br.uva.tcc.sentry.scan.messaging.ScanPublishResult;
+import br.uva.tcc.sentry.scan.messaging.ScanPublishStatus;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
 import br.uva.tcc.sentry.scan.domain.Scan;
 import br.uva.tcc.sentry.scan.domain.ScanExecutionGroup;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
 import br.uva.tcc.sentry.scan.domain.ScanStatus;
+import br.uva.tcc.sentry.scan.exception.ScanPublishNotConfirmedException;
 import br.uva.tcc.sentry.scan.scanner.ScanEngine;
 
 /**
@@ -45,53 +48,60 @@ public class ScanService {
         return new Scan();
     }
 
+   
     public ScanResponse executeScan(String strTargets) {
         var targets = targetsToList(strTargets);
         var scanGroup = new ScanExecutionGroup();
-        
-        String responseMessage = "Solicitações de scan aceitas para processamento.";
-        ScanStatus status = ScanStatus.PENDING;
-        String exception = null;
-        Map<String, UUID> scanningHosts = new HashMap<>();
-        List<String> failedTargets = new ArrayList<>();        
+
+        List<ScanPublishResult> publishResults = new ArrayList<>();
 
         log.info("Recebendo solicitação para scan dos Hosts: {}", targets);
-        
-        for (String target : targets){
+
+        for (String target : targets) {
             var scan = new Scan(target, scanGroup);
             scanGroup.addScan(scan);
 
             try {
                 scanProducer.enviarMensagem(new ScanMessage(scan.getId(), target, scanGroup.getId()));
-                scanningHosts.put(scan.getTarget(), scan.getId());
-            } catch (AmqpException e) {
-                log.error("Falha ao enviar a solicitação de scan ao RabbitMQ: {}", e.getMessage(), e);
-                exception = e.getMessage();
-                failedTargets.add(target);
-            }    
+                publishResults.add(new ScanPublishResult(target, scan.getId(), ScanPublishStatus.CONFIRMED, "Publicação confirmada pelo RabbitMQ."));
+
+            } 
+            catch (ScanPublishNotConfirmedException e) {
+                log.warn("Publicação não confirmada para target {}: {}", target, e.getMessage(), e);
+                publishResults.add(new ScanPublishResult(target, scan.getId(), ScanPublishStatus.NOT_CONFIRMED, e.getMessage()));
+            } 
+            catch (AmqpException e) {
+                log.error("Falha na publicação para target {}: {}", target, e.getMessage(), e);
+                publishResults.add(new ScanPublishResult(target, scan.getId(), ScanPublishStatus.FAILED, e.getMessage()));
+            }
         }
 
-        if (!failedTargets.isEmpty()) {
-            responseMessage = scanningHosts.isEmpty()
-                ? "Nenhuma solicitação de scan foi enviada para processamento."
-                : "Nem todas as solicitações foram enviadas para processamento.";
+        long confirmedCount = publishResults.stream().filter(r -> r.status() == ScanPublishStatus.CONFIRMED).count();
+        ScanStatus status;
+        String responseMessage;
 
-                if (scanningHosts.isEmpty()) {
-                    status = ScanStatus.FAILED;
-                }
+        if (confirmedCount == 0) {
+            status = ScanStatus.FAILED;
+            responseMessage = "Nenhuma solicitação de scan foi confirmada pelo RabbitMQ.";
+        } 
+        else if (confirmedCount < targets.size()) {
+            status = ScanStatus.PARTIAL;
+            responseMessage = "Nem todas as solicitações de scan foram confirmadas.";
+        } 
+        else {
+            status = ScanStatus.ACCEPTED;
+            responseMessage = "Solicitações de scan aceitas para processamento.";
         }
 
-        ScanResponse response = new ScanResponse(
-            responseMessage, 
+        return new ScanResponse(
+            responseMessage,
             scanGroup.getId(),
-            status, 
-            targets.size(), 
-            scanningHosts, 
-            failedTargets,
-            exception);
-
-        return response;
+            status,
+            targets.size(),
+            publishResults
+        );
     }
+
 
     public List<String> targetsToList(String targets) {
         if (targets == null || targets.trim().isEmpty()) {
