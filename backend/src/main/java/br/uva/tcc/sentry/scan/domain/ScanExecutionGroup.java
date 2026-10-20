@@ -49,4 +49,24 @@ public class ScanExecutionGroup {
     public void addScan(Scan scan){
         this.scans.add(scan);
     }
+
+    public void markStarted(){
+        this.status = ScanStatus.RUNNING;
+        this.setStartedAt(LocalDateTime.now());
+    }
+
+    public void markFinished(){
+        this.status = ScanStatus.COMPLETED;
+        this.setFinishedAt(LocalDateTime.now());
+    }
+
+    public void markFailed(){
+        this.status = ScanStatus.FAILED;
+        this.setFinishedAt(LocalDateTime.now());
+    }
+
+    public void markCancelled(){
+        this.status = ScanStatus.CANCELLED;
+        this.setFinishedAt(LocalDateTime.now());
+    }
 }

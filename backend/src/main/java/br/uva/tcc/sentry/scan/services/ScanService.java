@@ -21,6 +21,9 @@ import br.uva.tcc.sentry.scan.domain.Scan;
 import br.uva.tcc.sentry.scan.domain.ScanExecutionGroup;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
 import br.uva.tcc.sentry.scan.domain.ScanStatus;
+import br.uva.tcc.sentry.scan.repository.ScanRepository;
+import br.uva.tcc.sentry.scan.repository.ScanExecutionGroupRepository;
+
 import br.uva.tcc.sentry.scan.exception.ScanPublishNotConfirmedException;
 import br.uva.tcc.sentry.scan.exception.UnauthorizedTargetException;
 import br.uva.tcc.sentry.scan.scanner.ScanEngine;
@@ -39,10 +42,14 @@ public class ScanService {
 
     private final ScanProducer scanProducer;
     private final TargetValidator targetValidator;
+    private final ScanRepository scanRepository;
+    private final ScanExecutionGroupRepository scanExecutionGroupRepository;
 
-    public ScanService(ScanProducer scanProducer, TargetValidator targetValidator) {
+    public ScanService(ScanProducer scanProducer, TargetValidator targetValidator, ScanRepository scanRepository, ScanExecutionGroupRepository scanExecutionGroupRepository) {
         this.scanProducer = scanProducer;
         this.targetValidator = targetValidator;
+        this.scanRepository = scanRepository;
+        this.scanExecutionGroupRepository = scanExecutionGroupRepository;
     }
 
     public ArrayList<Scan> findAll() {
@@ -57,6 +64,7 @@ public class ScanService {
     public ScanResponse executeScan(String strTargets) {
         var targets = targetsToList(strTargets);
         var scanGroup = new ScanExecutionGroup();
+        scanExecutionGroupRepository.save(scanGroup);
 
         List<ScanPublishResult> publishResults = new ArrayList<>();
 
@@ -65,6 +73,7 @@ public class ScanService {
         for (String target : targets) {
             var scan = new Scan(target, scanGroup);
             scanGroup.addScan(scan);
+            scanRepository.save(scan);
 
             try {
                 scanProducer.enviarMensagem(new ScanMessage(scan.getId(), target, scanGroup.getId()));
@@ -97,6 +106,8 @@ public class ScanService {
             status = ScanStatus.ACCEPTED;
             responseMessage = "Solicitações de scan aceitas para processamento.";
         }
+        
+        scanExecutionGroupRepository.save(scanGroup);
 
         return new ScanResponse(
             responseMessage,

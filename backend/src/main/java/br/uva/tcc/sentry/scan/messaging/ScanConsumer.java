@@ -1,15 +1,20 @@
 package br.uva.tcc.sentry.scan.messaging;
 
 import br.uva.tcc.sentry.scan.domain.Scan;
+import br.uva.tcc.sentry.scan.domain.ScanExecutionGroup;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
+import br.uva.tcc.sentry.scan.domain.ScanStatus;
 import br.uva.tcc.sentry.scan.exception.PermanentScanException;
 import br.uva.tcc.sentry.scan.exception.TransientScanException;
-
+import br.uva.tcc.sentry.scan.repository.ScanExecutionGroupRepository;
+import br.uva.tcc.sentry.scan.repository.ScanRepository;
 import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
 import br.uva.tcc.sentry.finding.factory.FindingFactory;
 import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 import br.uva.tcc.sentry.scan.scanner.ScanEngine;
 import br.uva.tcc.sentry.vulnerability.nvd.VulnerabilityLookupService;
+
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +32,17 @@ public class ScanConsumer {
     private final VulnerabilityLookupService vulnerabilityLookupService;
     private final ConfigFindingService configFindingService;
     private final FindingFactory findingFactory;
+
+    private final ScanRepository scanRepository;
+    private final ScanExecutionGroupRepository scanExecutionGroupRepository;
     
-    public ScanConsumer(ScanEngine scanEngine, VulnerabilityLookupService vulnerabilityLookupService, ConfigFindingService configFindingService, FindingFactory findingFactory) {
+    public ScanConsumer(ScanEngine scanEngine, VulnerabilityLookupService vulnerabilityLookupService, ConfigFindingService configFindingService, FindingFactory findingFactory, ScanRepository scanRepository, ScanExecutionGroupRepository scanExecutionGroupRepository) {
         this.scanEngine = scanEngine;
         this.vulnerabilityLookupService = vulnerabilityLookupService;
         this.configFindingService = configFindingService;
         this.findingFactory = findingFactory;
+        this.scanRepository = scanRepository;
+        this.scanExecutionGroupRepository = scanExecutionGroupRepository;
     }
     
     @RabbitListener(queues = RabbitMQConfig.SCAN_QUEUE, containerFactory = "scanListenerContainerFactory")
@@ -49,25 +59,28 @@ public class ScanConsumer {
         } 
         catch (PermanentScanException e) {
             log.error("Falha permanente no scan {} para o alvo {}.", scanRequestReceived.scanId(), scanRequestReceived.target(), e);
+            finalizarScanComFalha(scanRequestReceived, e);
             throw e;
         } 
         catch (Exception e) {
             log.error("Erro não classificado durante o scan {} para o alvo {}.", scanRequestReceived.scanId(), scanRequestReceived.target(), e);
+            finalizarScanComFalha(scanRequestReceived, e);
             throw new PermanentScanException("Falha não classificada no processamento do scan", e);
         }
     }
 
-
-     /* TODO (processarMensagem): Finalizar o  Fluxo de ScanGroup quando a persistência estiver configurada
-         - obter Scangroup pelo id no banco de dados
-         - Verificar se esse é o primeiro scan do grupo a ser executado e mudar os status pra running
-         - Seta o startedAt
-         - Salvar no banco
-         - Verifique se ainda existe algum scan do grupo em estado não terminal. Se não existir, finalize o grupo
-        */
     private void processarMensagem(ScanMessage scanRequestReceived){
-        Scan scan = new Scan(scanRequestReceived.scanId(), scanRequestReceived.target());
+
+        Scan scan = scanRepository.findWithExecGroupById(scanRequestReceived.scanId()).orElseThrow(() -> new PermanentScanException("Scan não encontrado: " + scanRequestReceived.scanId()));
+        ScanExecutionGroup scanGroup = scan.getExecGroup();
+
+        if(scanGroup.getStatus() == ScanStatus.PENDING){
+            scanGroup.markStarted();
+            scanExecutionGroupRepository.save(scanGroup);
+        }
+
         scan.ScanStarted();
+        scanRepository.save(scan);
 
         ScanResult result = scanEngine.scan(scan.getTarget());
         scan.setCommand(result.getCommand());
@@ -76,7 +89,9 @@ public class ScanConsumer {
             log.warn("Nenhum host encontrado. Scan ID: {}, Target: {}", scan.getId(), scan.getTarget());
             scan.addWarning("O Host não foi encontrado para o endereço informado");
             scan.markNotFounded();
+            scanRepository.save(scan);
             
+            verificaGrupo(scanGroup);
             return;
         }
 
@@ -92,6 +107,7 @@ public class ScanConsumer {
 
                 if (!lookupResult.successful()) {
                     scan.addWarning(lookupResult.errorMessage());
+                    scanRepository.save(scan);
                     continue;
                 }
 
@@ -105,6 +121,41 @@ public class ScanConsumer {
         }
 
         scan.markFinished();
+        scanRepository.save(scan);
         log.info("Scan finalizado com sucesso. ID: {}, Host: {}", scanRequestReceived.scanId(), scanRequestReceived.target());
+
+        verificaGrupo(scanGroup);
     }
+
+    public void verificaGrupo(ScanExecutionGroup scanGroup){
+        boolean hasActiveScans = scanRepository.existsScansByGroupIdAndStatusIn(
+            scanGroup.getId(),
+            List.of(ScanStatus.PENDING)
+        );
+
+        if (!hasActiveScans) {
+            scanGroup.markFinished();
+            scanExecutionGroupRepository.save(scanGroup);
+        }
+    }
+
+    private void finalizarScanComFalha(ScanMessage scanRequestReceived, Exception exception) {
+
+    Scan scan = scanRepository.findWithExecGroupById(scanRequestReceived.scanId()).orElseThrow(() -> new PermanentScanException("Scan não encontrado: " + scanRequestReceived.scanId()));
+
+    if (scan.getStatus() == ScanStatus.COMPLETED
+            || scan.getStatus() == ScanStatus.NOT_FOUND
+            || scan.getStatus() == ScanStatus.FAILED) {
+        log.warn("O scan {} já está em um estado terminal: {}.", scan.getId(), scan.getStatus());
+        return;
+    }
+
+    scan.setErrorMessage(exception.getMessage());
+    scan.markFailed();
+    scanRepository.save(scan);
+
+    log.error("Scan {} finalizado com falha. Motivo: {}", scan.getId(), exception.getMessage());
+
+    verificaGrupo(scan.getExecGroup());
+}
 }
