@@ -32,8 +32,7 @@ npm run dev
 
 ## Comando para levantar o banco de dados
    ```
-    docker run --name sentry_db -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql:8.0
-
+    docker run --name sentry_db -e MYSQL_ROOT_PASSWORD=123456 -e MYSQL_DATABASE=sentry_db -p 3306:3306 -d mysql:8.0
    ```
 
 
