@@ -5,5 +5,10 @@ public enum ScanStatus {
     RUNNING,
     COMPLETED,
     FAILED,
-    CANCELLED
+    NOT_FOUND,
+    CANCELLED,
+    /* Scan GroupException */
+    ACCEPTED,
+    PARTIAL,
 }
+

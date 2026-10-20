@@ -37,4 +37,18 @@ public class Finding {
     private LocalDateTime resolvedAt;
     private String evidence;
 
+    @Override
+    public String toString() {
+        return new StringBuilder()
+                .append("Finding {")
+                .append("id=").append(id)
+                .append(", type=").append(type)
+                .append(", severity=").append(severity)
+                .append(", status=").append(status)
+                .append(", title='").append(title).append('\'')
+                .append(", description='").append(description).append('\'')
+                .append(", detectedAt=").append(detectedAt)
+                .append('}')
+                .toString();
+    }
 }

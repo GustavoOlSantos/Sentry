@@ -8,6 +8,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import br.uva.tcc.sentry.scan.exception.PermanentScanException;
+
 @Component
 public class NmapProcessExecutor {
 
@@ -21,16 +23,16 @@ public class NmapProcessExecutor {
 
             if (exitCode != 0) {
                 String error = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
-                throw new IllegalStateException("Nmap execution failed: " + error);
+                throw new IllegalStateException("Falha na execução do Nmap: " + error);
             }
 
             return Files.readString(outputFile, StandardCharsets.UTF_8);
 
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to execute Nmap", e);
+            throw new PermanentScanException("Não foi possível iniciar o Nmap ou acessar sua saída. Verifique a instalação e as permissões.", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Nmap execution was interrupted", e);
+            throw new IllegalStateException("A execução do Nmap foi interrompida", e);
         }
     }
 }

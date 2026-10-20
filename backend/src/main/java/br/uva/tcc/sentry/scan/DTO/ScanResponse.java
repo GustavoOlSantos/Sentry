@@ -1,8 +1,11 @@
 package br.uva.tcc.sentry.scan.DTO;
 
-import br.uva.tcc.sentry.scan.domain.ScanResult;
-import br.uva.tcc.sentry.scan.domain.Scan;
+import java.util.List;
+import java.util.UUID;
 
-public record ScanResponse(Scan scan, ScanResult scanResult) {
-    
-}
+import br.uva.tcc.sentry.scan.domain.ScanStatus;
+import br.uva.tcc.sentry.scan.messaging.ScanPublishResult;
+
+
+public record ScanResponse(String message, UUID groupId, ScanStatus status, int totalTargets, List<ScanPublishResult> publicacoes) {}
+

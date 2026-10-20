@@ -13,7 +13,6 @@ import java.util.UUID;
 
 @Component
 public class NmapScanEngine implements ScanEngine {
-
     private final NmapCommandBuilder commandBuilder;
     private final NmapProcessExecutor processExecutor;
     private final NmapResultParser resultParser;
@@ -48,7 +47,7 @@ public class NmapScanEngine implements ScanEngine {
         try {
             return Files.createTempFile("nmap-" + UUID.randomUUID(), ".xml");
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to create temporary Nmap output file", e);
+            throw new IllegalStateException("Falha ao criar o arquivo temporário de saída do Nmap", e);
         }
     }
 

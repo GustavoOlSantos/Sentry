@@ -2,25 +2,29 @@ package br.uva.tcc.sentry.scan.services;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.amqp.AmqpException;
 import org.springframework.stereotype.Service;
 
-import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
-import br.uva.tcc.sentry.finding.factory.FindingFactory;
-import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
+import br.uva.tcc.sentry.scan.messaging.ScanMessage;
+import br.uva.tcc.sentry.scan.messaging.ScanProducer;
+import br.uva.tcc.sentry.scan.messaging.ScanPublishResult;
+import br.uva.tcc.sentry.scan.messaging.ScanPublishStatus;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
 import br.uva.tcc.sentry.scan.domain.Scan;
+import br.uva.tcc.sentry.scan.domain.ScanExecutionGroup;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
+import br.uva.tcc.sentry.scan.domain.ScanStatus;
+import br.uva.tcc.sentry.scan.exception.ScanPublishNotConfirmedException;
 import br.uva.tcc.sentry.scan.exception.UnauthorizedTargetException;
 import br.uva.tcc.sentry.scan.scanner.ScanEngine;
 import br.uva.tcc.sentry.scan.validation.TargetValidator;
-import br.uva.tcc.sentry.vulnerability.nvd.VulnerabilityLookupService;
 
 /**
  * Orquestra o ciclo completo de um scan: dispara o {@link ScanEngine}
@@ -33,19 +37,11 @@ public class ScanService {
 
     private static final Logger log = LoggerFactory.getLogger(ScanService.class);
 
-    private final ScanEngine scanEngine;
-    private final VulnerabilityLookupService vulnerabilityLookupService;
-    private final ConfigFindingService configFindingService;
-    private final FindingFactory findingFactory;
+    private final ScanProducer scanProducer;
     private final TargetValidator targetValidator;
 
-    public ScanService(ScanEngine scanEngine, VulnerabilityLookupService vulnerabilityLookupService,
-            ConfigFindingService configFindingService, FindingFactory findingFactory,
-            TargetValidator targetValidator) {
-        this.scanEngine = scanEngine;
-        this.vulnerabilityLookupService = vulnerabilityLookupService;
-        this.configFindingService = configFindingService;
-        this.findingFactory = findingFactory;
+    public ScanService(ScanProducer scanProducer, TargetValidator targetValidator) {
+        this.scanProducer = scanProducer;
         this.targetValidator = targetValidator;
     }
 
@@ -57,41 +53,58 @@ public class ScanService {
         return new Scan();
     }
 
-    public ArrayList<ScanResponse> executeScan(String strTargets) {
-        var response = new  ArrayList<ScanResponse>();
-
+   
+    public ScanResponse executeScan(String strTargets) {
         var targets = targetsToList(strTargets);
-        log.info("Scan solicitado para os  Hosts: " + targets);
+        var scanGroup = new ScanExecutionGroup();
+
+        List<ScanPublishResult> publishResults = new ArrayList<>();
+
+        log.info("Recebendo solicitação para scan dos Hosts: {}", targets);
 
         for (String target : targets) {
+            var scan = new Scan(target, scanGroup);
+            scanGroup.addScan(scan);
 
-            var scan = new Scan(target);
+            try {
+                scanProducer.enviarMensagem(new ScanMessage(scan.getId(), target, scanGroup.getId()));
+                publishResults.add(new ScanPublishResult(target, scan.getId(), ScanPublishStatus.CONFIRMED, "Publicação confirmada pelo RabbitMQ."));
 
-            scan.ScanStarted();
-            ScanResult result = scanEngine.scan(target);
-            scan.setCommand(result.getCommand());
-
-            for (DiscoveredHost host : result.getHosts()) {
-                result.addFindings(configFindingService.check(host, scan));
-
-                for (var service : host.services()) {
-
-                    if (service.hasCpe() && service.getVersion() != null) {
-                        var vulnerabilities = vulnerabilityLookupService.lookupByCpe(service.getCpe());
-
-                        for (var vulnerability : vulnerabilities) {
-                            result.addFinding(findingFactory.fromVulnerability(host, service, vulnerability, scan));
-                        }
-                    }
-                }
+            } 
+            catch (ScanPublishNotConfirmedException e) {
+                log.warn("Publicação não confirmada para target {}: {}", target, e.getMessage(), e);
+                publishResults.add(new ScanPublishResult(target, scan.getId(), ScanPublishStatus.NOT_CONFIRMED, e.getMessage()));
+            } 
+            catch (AmqpException e) {
+                log.error("Falha na publicação para target {}: {}", target, e.getMessage(), e);
+                publishResults.add(new ScanPublishResult(target, scan.getId(), ScanPublishStatus.FAILED, e.getMessage()));
             }
-
-            response.add(new ScanResponse(scan, result));
-            scan.markFinished();
-            log.info("Scan para o Host: " + target + " finalizado com sucesso.");
         }
 
-        return response;
+        long confirmedCount = publishResults.stream().filter(r -> r.status() == ScanPublishStatus.CONFIRMED).count();
+        ScanStatus status;
+        String responseMessage;
+
+        if (confirmedCount == 0) {
+            status = ScanStatus.FAILED;
+            responseMessage = "Nenhuma solicitação de scan foi confirmada pelo RabbitMQ.";
+        } 
+        else if (confirmedCount < targets.size()) {
+            status = ScanStatus.PARTIAL;
+            responseMessage = "Nem todas as solicitações de scan foram confirmadas.";
+        } 
+        else {
+            status = ScanStatus.ACCEPTED;
+            responseMessage = "Solicitações de scan aceitas para processamento.";
+        }
+
+        return new ScanResponse(
+            responseMessage,
+            scanGroup.getId(),
+            status,
+            targets.size(),
+            publishResults
+        );
     }
 
     /**
@@ -102,7 +115,7 @@ public class ScanService {
      */
     public List<String> targetsToList(String targets) {
         targets = targets.replaceAll("\\s+", "");
-        List<String> list = Arrays.asList(targets.split(","));
+        List<String> list = new ArrayList<>(new LinkedHashSet<>(Arrays.asList(targets.split(","))));
 
         List<String> invalid = list.stream()
                 .filter(target -> !targetValidator.isValid(target))
