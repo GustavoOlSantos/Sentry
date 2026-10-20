@@ -29,3 +29,11 @@ npm run dev
     ```
 - apontar scan para: `{ "targets": "127.0.0.1" }`
 - SEMPRE DERRUBAR APÓS O TÉRMINO DOS TESTES = `docker compose down`
+
+## Comando para levantar o banco de dados
+   ```
+    docker run --name sentry_db -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql:8.0
+
+   ```
+
+

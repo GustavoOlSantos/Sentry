@@ -3,21 +3,47 @@ package br.uva.tcc.sentry.Asset.domain;
 import java.util.UUID;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * Representa um ativo (Asset) descoberto na rede, como uma máquina, servidor ou dispositivo.
- */
+@Entity
+@Table(name = "asset", indexes = @Index(name = "idx_asset_ip_address", columnList = "ip_address"))
 @Getter
 @Setter
 public class Asset {
-    UUID id;
-    String ipAddress;
-    String hostname;
-    String macAddress;
-    String operatingSystem;
-    AssetStatus status;
-    LocalDateTime firstSeenAt;
-    LocalDateTime lastSeenAt;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(name = "ip_address", nullable = false, length = 45) // 45 = tamanho máximo de um IPv6 textual
+    private String ipAddress;
+
+    private String hostname;
+
+    @Column(name = "mac_address", length = 17)
+    private String macAddress;
+
+    @Column(name = "operating_system")
+    private String operatingSystem;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AssetStatus status;
+
+    @Column(name = "first_seen_at")
+    private LocalDateTime firstSeenAt;
+
+    @Column(name = "last_seen_at")
+    private LocalDateTime lastSeenAt;
 }

@@ -1,5 +1,6 @@
 package br.uva.tcc.sentry.scan.domain;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,19 +9,47 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
+@Entity
+@Table(name = "scan")
 @Getter 
 @Setter 
 public class Scan {
-    
+
+    // O id é gerado na própria aplicação (UUID.randomUUID() nos construtores), pois é
+    // publicado na fila antes de o scan ser persistido. Por isso não há @GeneratedValue.
+    @Id
     private UUID id;
+
+    /** N scans : 1 grupo de execução. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exec_group_id")
     private ScanExecutionGroup execGroup;
+
+    @Column(nullable = false)
     private String target;
+
+    @Column(length = 2000)
     private String command;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private ScanStatus status;
+
+    @ElementCollection
+    @CollectionTable(name = "scan_warning", joinColumns = @JoinColumn(name = "scan_id"))
+    @Column(name = "warning", length = 1000)
     private List<String> warnings = new ArrayList<>();
+
+    @Column(name = "error_message", length = 2000)
     private String errorMessage;
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "started_at")
     private LocalDateTime startedAt;
+
+    @Column(name = "finished_at")
     private LocalDateTime finishedAt;
 
     public Scan(String target){
