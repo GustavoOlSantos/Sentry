@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import  {useNavigate} from 'react-router-dom';
 
 import '../../styles/home.css';
+import { SideBar } from '../../components/sidebar';
 
 function Home() {
     const navigate = useNavigate();
@@ -55,29 +56,8 @@ function Home() {
   return (
     <main>
         <section className="home">
-            <aside className="home_sidebar section">
-                <ul>
-                    <li className="active" onClick={() => navigate('/')}>
-                        <i className="fas fa-tachograph-digital"> </i>Dashboard
-                    </li>
-
-                    <li onClick={() => navigate('/cards')}>
-                        <i className="fa-brands fa-trello"> </i>Correções Pendentes
-                    </li>
-
-                    <li onClick={() => navigate('/scans')}>
-                        <i className="fas fa-gauge-simple"> </i>Varreduras
-                    </li>
-
-                    <li onClick={() => navigate('/reports')}>
-                        <i className="fas fa-file-shield"> </i>Relatórios
-                    </li>
-
-                    <li onClick={() => navigate('/policies')}>
-                        <i className="fas fa-shield-halved"> </i>Políticas
-                    </li>
-                </ul>
-            </aside>
+            
+            <SideBar />
 
             <article className="overview">
                 <h3>Visão geral</h3>

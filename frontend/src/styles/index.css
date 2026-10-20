@@ -151,3 +151,46 @@ code {
     }
   }
 }
+
+main {
+  margin: 10px;
+  width: calc(100vw - 20px) !important;
+  max-height: calc(100vh - 121px);
+  min-height: calc(100vh - 135px);
+}
+
+.request-success-backdrop{
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: -10px;
+  border-radius: 10px;
+  background-color: var(--surface-success);
+}
+.request-success {
+  font-size: medium;
+  color: var(--severity-low);
+}
+
+.request-warning-backdrop{
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: -10px;
+  border-radius: 10px;
+  background-color: var(--surface-medium);
+}
+.request-warning {
+  font-size: medium;
+  color: var(--severity-medium);
+}
+
+.request-error-backdrop{
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: -10px;
+  border-radius: 10px;
+  background-color: var(--surface-critical);
+}
+.request-error {
+  font-size: medium;
+  color: var(--severity-critical);
+}

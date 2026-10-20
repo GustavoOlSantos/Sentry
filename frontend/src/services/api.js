@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = import.meta.env.VITE_SENTRY_API;
 
 const api = axios.create({
     baseURL: API_URL
@@ -17,8 +17,8 @@ api.interceptors.request.use(config => {
     return config;
 });
 
-api.interceptors.response.use(
-  /*(response) => response,
+/*api.interceptors.response.use(
+  (response) => response,
 
   (error) => {
     const status = error.response?.status;
@@ -37,8 +37,8 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }*/
-);
+  }
+);*/
 
 
 export default api;
