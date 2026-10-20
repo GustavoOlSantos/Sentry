@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import '../../styles/novo-scan.css';
 
 import api from '../../services/api';
@@ -51,7 +51,20 @@ export function NovoScan() {
         const mensagemErro = err.response?.data?.message || err.message || "Erro interno ao iniciar scan.";
         setError(mensagemErro);
     });
-}
+  }
+
+  useEffect(() => {
+    function checarStatus() {
+        api.get('/actuator/health')
+        .then(res => setBackendStatus(res?.data?.status))
+        .catch(() => setBackendStatus("DOWN"));
+    }
+
+    checarStatus();
+    const intervalo = setInterval(checarStatus, 5000);
+    return () => clearInterval(intervalo);
+  }, []);
+
 
   return (
     <main className="hosts-page">
@@ -125,9 +138,8 @@ export function NovoScan() {
 
                     <div className="hosts-actions">
                         <span className="hosts-status">
-                            {/*TODO: adicionar request à Health para ver se o Backend está disponível*/}
-                            <span className="status-dot"></span>
-                            Pronto para configurar
+                            <span className={`status-dot ${backendStatus !== 'UP' ? 'error' : ''}`}></span>
+                            {backendStatus === 'UP' ? 'Pronto para configurar' : 'Indisponibilidade detectada'}
                         </span>
 
                         <button className="btn-submit-hosts" type="submit">

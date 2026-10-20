@@ -249,8 +249,13 @@
   flex-shrink: 0;
   background: var(--severity-low);
   border-radius: 50%;
-  box-shadow: 0 0 10px rgba(67, 201, 154, 0.25);
+  box-shadow: 0 0 10px var(--surface-success);
 }
+
+.status-dot.error{
+    background: var(--severity-critical);
+    box-shadow: 0 0 10px var(--surface-critical) !important;
+  }
 
 .btn-submit-hosts {
   display: inline-flex;
