@@ -98,6 +98,8 @@ h3{
     li a.active {
         font-weight: 600;
         color: var(--text-primary);
+        background-color: var(--bg-active-darker);
+        border-radius: 10px;
 
         i {
             color: var(--brand-secondary);
