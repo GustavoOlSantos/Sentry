@@ -136,7 +136,7 @@ function Home() {
                 
                 <section className='actions'>
                     <button onClick={() => navigate('novo-scan')}className='btn primary'>Nova varredura</button>
-                    <button onClick={() => navigate('ativos-encontrados')} className='btn secondary'>Visualizar ativos</button>
+                    <button onClick={() => navigate('hosts')} className='btn secondary'>Visualizar ativos</button>
                 </section>
             </article>
       </section>

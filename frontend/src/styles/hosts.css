@@ -204,7 +204,7 @@
     padding: 20px;
 
     i {
-        color: var(--text-secondary);
+        color: var(--brand-primary);
         font-size: 25pt;
     }
     .status::before{
