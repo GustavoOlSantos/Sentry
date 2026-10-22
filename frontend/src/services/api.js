@@ -2,6 +2,10 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_SENTRY_API;
 
+if(API_URL == undefined || API_URL.trim() == ""){
+  console.warn("Variáveis de ambiente não configuradas.");
+}
+
 const api = axios.create({
     baseURL: API_URL
 });

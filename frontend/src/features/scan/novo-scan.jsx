@@ -26,6 +26,13 @@ export function NovoScan() {
     setError('');
     setResponse('');
 
+    console.log(backendStatus);
+
+    if(backendStatus == "DOWN"){
+        setError("Indisponibilidade detectada no serviço de varredura.");
+        return;
+    }
+
     const arrayEnderecos = refs.current.slice(0, endr.length)
     .map((ref) => { 
         const valor = ref?.value ?? "";
@@ -33,7 +40,6 @@ export function NovoScan() {
     });
 
     const temEnderecoVazio = arrayEnderecos.some((arr) => !arr || arr.trim() === "");
-
     if (temEnderecoVazio) {
         setError("Os endereços devem ser preenchidos");
         return;
@@ -56,7 +62,10 @@ export function NovoScan() {
   useEffect(() => {
     function checarStatus() {
         api.get('/actuator/health')
-        .then(res => setBackendStatus(res?.data?.status))
+        .then(res => {
+            console.log("Resposta da API:", res.data);
+            setBackendStatus(res?.data?.status)
+        })
         .catch(() => setBackendStatus("DOWN"));
     }
 

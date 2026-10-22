@@ -14,6 +14,7 @@ docker run -d --name sentry-rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-mana
 ## Comando para executar o React
 
 ```
+$env:VITE_SENTRY_API="http://localhost:8080"        
 npm run dev
 ```
 
