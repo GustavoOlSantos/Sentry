@@ -1,25 +1,32 @@
 package br.uva.tcc.sentry.scan.messaging;
 
+import br.uva.tcc.sentry.config.RabbitMQConfig;
 import br.uva.tcc.sentry.scan.domain.Scan;
+import br.uva.tcc.sentry.scan.domain.ScanAsset;
 import br.uva.tcc.sentry.scan.domain.ScanExecutionGroup;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
 import br.uva.tcc.sentry.scan.domain.ScanStatus;
-import br.uva.tcc.sentry.scan.exception.PermanentScanException;
-import br.uva.tcc.sentry.scan.exception.TransientScanException;
-import br.uva.tcc.sentry.scan.repository.ScanExecutionGroupRepository;
-import br.uva.tcc.sentry.scan.repository.ScanRepository;
-import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
-import br.uva.tcc.sentry.finding.factory.FindingFactory;
 import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 import br.uva.tcc.sentry.scan.scanner.ScanEngine;
+
+import br.uva.tcc.sentry.scan.exception.PermanentScanException;
+import br.uva.tcc.sentry.scan.exception.TransientScanException;
+
+import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
+import br.uva.tcc.sentry.finding.factory.FindingFactory;
 import br.uva.tcc.sentry.vulnerability.nvd.VulnerabilityLookupService;
+import br.uva.tcc.sentry.scan.repository.ScanAssetRepository;
+import br.uva.tcc.sentry.scan.repository.ScanExecutionGroupRepository;
+import br.uva.tcc.sentry.scan.repository.ScanRepository;
+import br.uva.tcc.sentry.Asset.domain.Service;
+import br.uva.tcc.sentry.Asset.repository.AssetRepository;
+import br.uva.tcc.sentry.Asset.repository.ServiceRepository;
 
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.uva.tcc.sentry.config.RabbitMQConfig;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -34,15 +41,21 @@ public class ScanConsumer {
     private final FindingFactory findingFactory;
 
     private final ScanRepository scanRepository;
+    private final AssetRepository assetRepository;
+    private final ServiceRepository serviceRepository;
     private final ScanExecutionGroupRepository scanExecutionGroupRepository;
+    private final ScanAssetRepository scanAssetRepository;
     
-    public ScanConsumer(ScanEngine scanEngine, VulnerabilityLookupService vulnerabilityLookupService, ConfigFindingService configFindingService, FindingFactory findingFactory, ScanRepository scanRepository, ScanExecutionGroupRepository scanExecutionGroupRepository) {
+    public ScanConsumer(ScanEngine scanEngine, VulnerabilityLookupService vulnerabilityLookupService, ConfigFindingService configFindingService, FindingFactory findingFactory, ScanRepository scanRepository, ScanExecutionGroupRepository scanExecutionGroupRepository, AssetRepository assetRepository, ServiceRepository serviceRepository, ScanAssetRepository scanAssetRepository) {
         this.scanEngine = scanEngine;
         this.vulnerabilityLookupService = vulnerabilityLookupService;
         this.configFindingService = configFindingService;
         this.findingFactory = findingFactory;
         this.scanRepository = scanRepository;
+        this.assetRepository = assetRepository;
+        this.serviceRepository = serviceRepository;
         this.scanExecutionGroupRepository = scanExecutionGroupRepository;
+        this.scanAssetRepository = scanAssetRepository;
     }
     
     @RabbitListener(queues = RabbitMQConfig.SCAN_QUEUE, containerFactory = "scanListenerContainerFactory")
@@ -93,6 +106,17 @@ public class ScanConsumer {
             
             verificaGrupo(scanGroup);
             return;
+        }
+
+        for (DiscoveredHost host : result.getHosts()) {
+            assetRepository.save(host.asset());
+
+            var scanAsset = new ScanAsset(scan, host.asset(), host.asset().getFirstSeenAt());
+            scanAssetRepository.save(scanAsset);
+
+            for(Service service : host.services()){
+                serviceRepository.save(service);
+            }
         }
 
         for (DiscoveredHost host : result.getHosts()) {

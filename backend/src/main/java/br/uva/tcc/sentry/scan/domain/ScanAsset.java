@@ -35,6 +35,9 @@ public class ScanAsset {
     @Column(name = "discovered_at")
     private LocalDateTime discoveredAt;
 
-    @Column(length = 30)
-    private String status;
+    public ScanAsset(Scan scan, Asset asset, LocalDateTime discoveredAt){
+        this.scan = scan;
+        this.asset = asset;
+        this.discoveredAt = discoveredAt;
+    }
 }
