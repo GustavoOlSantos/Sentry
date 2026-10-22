@@ -15,6 +15,7 @@ import br.uva.tcc.sentry.scan.exception.TransientScanException;
 import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
 import br.uva.tcc.sentry.finding.factory.FindingFactory;
 import br.uva.tcc.sentry.vulnerability.nvd.VulnerabilityLookupService;
+import lombok.RequiredArgsConstructor;
 import br.uva.tcc.sentry.scan.repository.ScanAssetRepository;
 import br.uva.tcc.sentry.scan.repository.ScanExecutionGroupRepository;
 import br.uva.tcc.sentry.scan.repository.ScanRepository;
@@ -31,6 +32,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class ScanConsumer {
     
     private static final Logger log = LoggerFactory.getLogger(ScanConsumer.class);
@@ -46,17 +48,6 @@ public class ScanConsumer {
     private final ScanExecutionGroupRepository scanExecutionGroupRepository;
     private final ScanAssetRepository scanAssetRepository;
     
-    public ScanConsumer(ScanEngine scanEngine, VulnerabilityLookupService vulnerabilityLookupService, ConfigFindingService configFindingService, FindingFactory findingFactory, ScanRepository scanRepository, ScanExecutionGroupRepository scanExecutionGroupRepository, AssetRepository assetRepository, ServiceRepository serviceRepository, ScanAssetRepository scanAssetRepository) {
-        this.scanEngine = scanEngine;
-        this.vulnerabilityLookupService = vulnerabilityLookupService;
-        this.configFindingService = configFindingService;
-        this.findingFactory = findingFactory;
-        this.scanRepository = scanRepository;
-        this.assetRepository = assetRepository;
-        this.serviceRepository = serviceRepository;
-        this.scanExecutionGroupRepository = scanExecutionGroupRepository;
-        this.scanAssetRepository = scanAssetRepository;
-    }
     
     @RabbitListener(queues = RabbitMQConfig.SCAN_QUEUE, containerFactory = "scanListenerContainerFactory")
     public void consumirMensagem(ScanMessage scanRequestReceived) {
