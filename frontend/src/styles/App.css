@@ -15,7 +15,7 @@
 }
   
 footer, nav{
-  width: calc(100vw - 20px);
+  width: 100vw;
   min-height: 50px;
   display: flex;
   align-items: center;
@@ -51,6 +51,7 @@ footer > span {
   font-size: 11px;
   font-weight: 650;
   letter-spacing: 1px;
+  margin-right: 10px;
 }
 
 .footer-environment > span {

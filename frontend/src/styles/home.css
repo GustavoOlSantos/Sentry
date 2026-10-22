@@ -22,7 +22,7 @@ h3{
     
     min-width: 380px;
     max-width: 450px;
-    max-height: 80vh;
+    height: calc(100vh - 50px - 51px - 20px - 20px);
 
     ul {
         list-style: none;
@@ -38,6 +38,7 @@ h3{
         isolation: isolate;
         width: 100%;
         box-sizing: border-box;
+        font-size: 13pt;
 
         a {
             text-decoration: none;
@@ -54,8 +55,20 @@ h3{
                 transition: color 0.2s ease-in-out;
             }
         }
-
         
+        span{
+            line-height: 20px;
+        }
+        p{
+            font-size: 10pt;
+            margin: 0;
+            padding: 0;
+            color: var(--text-muted);
+        }
+
+        i {
+            font-size: 15pt;
+        }
 
         &:hover {
             color: var(--text-primary);
@@ -88,6 +101,10 @@ h3{
 
         i {
             color: var(--brand-secondary);
+        }
+
+        p{
+            font-weight: normal;
         }
     }
 

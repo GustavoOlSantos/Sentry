@@ -59,6 +59,18 @@ public class Service {
         this.cpe = cpe;
     }
 
+    public Service(UUID id, int port, String protocol, String state, String service,
+                     String product, String version, String cpe) {
+        this.id = id;
+        this.port = port;
+        this.protocol = protocol;
+        this.state = state;
+        this.serviceName = service;
+        this.product = product;
+        this.version = version;
+        this.cpe = cpe;
+    }
+
     public boolean hasCpe() {
         return cpe != null && !cpe.isBlank();
     }

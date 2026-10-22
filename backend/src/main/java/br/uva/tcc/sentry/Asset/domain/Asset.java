@@ -1,5 +1,7 @@
 package br.uva.tcc.sentry.Asset.domain;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.time.LocalDateTime;
 
@@ -38,4 +40,7 @@ public class Asset {
 
     @Column(name = "last_seen_at")
     private LocalDateTime lastSeenAt;
+
+    @OneToMany(mappedBy = "asset", fetch = FetchType.LAZY)
+    private List<Service> services = new ArrayList<>();
 }
