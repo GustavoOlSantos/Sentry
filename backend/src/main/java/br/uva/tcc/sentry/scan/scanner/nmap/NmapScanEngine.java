@@ -4,6 +4,8 @@ import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 import br.uva.tcc.sentry.scan.scanner.ScanEngine;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Files;
@@ -13,6 +15,9 @@ import java.util.UUID;
 
 @Component
 public class NmapScanEngine implements ScanEngine {
+
+    private static final Logger log = LoggerFactory.getLogger(NmapScanEngine.class);
+
     private final NmapCommandBuilder commandBuilder;
     private final NmapProcessExecutor processExecutor;
     private final NmapResultParser resultParser;
@@ -39,6 +44,8 @@ public class NmapScanEngine implements ScanEngine {
             return result;
 
         } finally {
+            // roda sempre — em sucesso, erro ou timeout (o processExecutor já
+            // garante que o processo foi encerrado antes de chegar aqui)
             deleteTemporaryFile(outputFile);
         }
     }
@@ -53,8 +60,14 @@ public class NmapScanEngine implements ScanEngine {
 
     private void deleteTemporaryFile(Path outputFile) {
         try {
-            Files.deleteIfExists(outputFile);
-        } catch (Exception ignored) {
+            boolean deleted = Files.deleteIfExists(outputFile);
+            if (!deleted) {
+                log.debug("Arquivo temporário já não existia ao tentar limpar: {}", outputFile);
+            }
+        } catch (Exception e) {
+            // não é motivo pra derrubar o scan, mas precisa ficar registrado —
+            // arquivo temporário órfão acumulando no disco é um problema real
+            log.warn("Não foi possível apagar o arquivo temporário do Nmap: {}", outputFile, e);
         }
     }
 }

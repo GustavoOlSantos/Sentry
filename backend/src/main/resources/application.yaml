@@ -38,6 +38,12 @@ spring:
       hibernate:
         format_sql: true
 
+nmap:
+  # tempo maximo (em segundos) que um scan do Nmap pode rodar antes de
+  # ser encerrado automaticamente. Evita que um scan travado (rede lenta,
+  # alvo que nao responde, etc.) prenda a aplicacao indefinidamente.
+  timeout-seconds: ${NMAP_TIMEOUT_SECONDS:120}
+
 nvd:
   # chave gratuita: https://nvd.nist.gov/developers/request-an-api-key
   # sem chave funciona, mas o rate limit do NVD cai de 50 para 5 req/30s
