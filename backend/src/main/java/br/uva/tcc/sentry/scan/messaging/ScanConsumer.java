@@ -14,6 +14,9 @@ import br.uva.tcc.sentry.scan.exception.TransientScanException;
 
 import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
 import br.uva.tcc.sentry.finding.factory.FindingFactory;
+import br.uva.tcc.sentry.finding.repository.FindingRepository;
+import br.uva.tcc.sentry.vulnerability.domain.Vulnerability;
+import br.uva.tcc.sentry.vulnerability.repository.VulnerabilityRepository;
 import br.uva.tcc.sentry.vulnerability.nvd.VulnerabilityLookupService;
 import lombok.RequiredArgsConstructor;
 import br.uva.tcc.sentry.scan.repository.ScanAssetRepository;
@@ -29,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -47,6 +51,8 @@ public class ScanConsumer {
     private final ServiceRepository serviceRepository;
     private final ScanExecutionGroupRepository scanExecutionGroupRepository;
     private final ScanAssetRepository scanAssetRepository;
+    private final FindingRepository findingRepository;
+    private final VulnerabilityRepository vulnerabilityRepository;
     
     
     @RabbitListener(queues = RabbitMQConfig.SCAN_QUEUE, containerFactory = "scanListenerContainerFactory")
@@ -127,19 +133,36 @@ public class ScanConsumer {
                 }
 
                 for (var vulnerability : lookupResult.vulnerabilities()) {
-                    result.addFinding(findingFactory.fromVulnerability(host, service, vulnerability, scan));
+                    Vulnerability persistedVulnerability = obterOuSalvarVulnerability(vulnerability);
+                    result.addFinding(findingFactory.fromVulnerability(host, service, persistedVulnerability, scan));
                 }
-
-                // TODO: Salvar as finding, services no Banco
-                // TODO: Salvar cada vulnerability (Em finding) separada no banco de dados, checando se essa vulnerability já não existe no BD
             }
         }
+
+        findingRepository.saveAll(result.getFindings());
+        log.info("{} finding(s) salvo(s) para o scan {}", result.getFindings().size(), scan.getId());
 
         scan.markFinished();
         scanRepository.save(scan);
         log.info("Scan finalizado com sucesso. ID: {}, Host: {}", scanRequestReceived.scanId(), scanRequestReceived.target());
 
         verificaGrupo(scanGroup);
+    }
+
+    /**
+     * Garante que a vulnerability exista no banco sem duplicar o CVE (cve_id é único).
+     * Se já existir, reaproveita a registrada; se não, salva a nova.
+     */
+    private Vulnerability obterOuSalvarVulnerability(Vulnerability vulnerability) {
+        return vulnerabilityRepository.findByCveId(vulnerability.getCveId())
+                .orElseGet(() -> {
+                    try {
+                        return vulnerabilityRepository.save(vulnerability);
+                    } catch (DataIntegrityViolationException e) {
+                        // Outro scan salvou o mesmo CVE ao mesmo tempo
+                        return vulnerabilityRepository.findByCveId(vulnerability.getCveId()).orElseThrow(() -> e);
+                    }
+                });
     }
 
     public void verificaGrupo(ScanExecutionGroup scanGroup){
