@@ -17,6 +17,7 @@ export function Hosts(){
     const [hosts, setHosts] = useState([]);
     const [loadingHosts, setLoadingHosts] = useState(false);
     const [errorHosts, setErrorHosts] = useState(null);
+    const [selectedHost, setSelectedHost] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const onlineHosts = hosts.filter( host => host.status?.toUpperCase() === 'UP').length;
@@ -58,6 +59,11 @@ export function Hosts(){
         if (os.includes('mac') || os.includes('darwin')) return 'mac';
 
         return 'unknown';
+    };
+
+    const handleOpenModal = (host) => {
+        setSelectedHost(host);
+        setIsModalOpen(true);
     };
 
     const filteredHosts = useMemo(() => {
@@ -185,7 +191,7 @@ export function Hosts(){
 
                     <tbody>
                         {filteredHosts.map(host => (
-                            <tr key={host.id ?? host.ipAddress} className="clickable" onClick={() => setIsModalOpen(true)} >
+                            <tr key={host.id ?? host.ipAddress} className="clickable" onClick={() => handleOpenModal(host)} >
                                 <td>
                                     <span className="row">
                                         <i className="fa-solid fa-server big"></i>
@@ -248,10 +254,67 @@ export function Hosts(){
                 )}
             </section>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Detalhes do ativo">
-                <p><strong>IP:</strong> 192.168.1.10</p>
-                <p><strong>Sistema operacional:</strong> Linux Ubuntu 21</p>
-                <p><strong>Status:</strong> Online</p>
+           <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedHost(null); }} title={selectedHost?.hostname || "Detalhes do ativo"} >
+                {selectedHost && (
+                    <>
+                        <section className="host-details">
+
+                            <div className="detail-group">
+                                <h3>Informações Gerais</h3>
+
+                                <p> <strong>Hostname:</strong> {selectedHost.hostname} </p>
+
+                                <p> <strong>IP:</strong> {selectedHost.ipAddress}</p>
+
+                                <p> <strong>Sistema Operacional:</strong>{" "} {normalizeOS(selectedHost.operatingSystem)} </p>
+
+                                <p>
+                                    <strong>Status:</strong>{" "}
+                                    <span className={`status-text ${ selectedHost.status === "UP" ? "online" : "offline" }`}>
+                                        {selectedHost.status === "UP" ? "Online" : "Offline"}
+                                    </span>
+                                </p>
+
+                                <p>
+                                    <strong>Última descoberta:</strong>{" "}
+                                    {new Date( selectedHost.lastSeenAt).toLocaleString("pt-BR")}
+                                </p>
+                            </div>
+
+                            <div className="detail-group">
+                                <h3>Serviços Encontrados</h3>
+
+                                {selectedHost.services?.length > 0 ? (
+                                    <table className="services-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Porta</th>
+                                                <th>Serviço</th>
+                                                <th>Produto</th>
+                                                <th>Versão</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {selectedHost.services.map(service => (
+                                                <tr key={service.id}>
+                                                    <td> {service.port}/{service.protocol} </td>
+                                                    <td> {service.serviceName || "-"} </td>
+                                                    <td> {service.product || "-"} </td>
+                                                    <td> {service.version || "-"} </td>
+                                                    <td> {service.state || "-"} </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <p>Nenhum serviço encontrado.</p>
+                                )}
+                            </div>
+                        </section>
+                    </>
+                )}
             </Modal>
         </main>
     )
