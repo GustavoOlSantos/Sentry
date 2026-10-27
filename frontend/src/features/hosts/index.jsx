@@ -34,7 +34,7 @@ export function Hosts(){
             }
         } catch (err) {
             console.error("Falha ao obter listagem de Assets", err);
-            setErrorHosts("Não foi possível carregar os ativos.");
+            setErrorHosts("Não foi possível carregar os hosts.");
         } finally {
             setLoadingHosts(false);
         }
@@ -169,14 +169,6 @@ export function Hosts(){
                     </div>
                 </section>
 
-                {errorHosts && (
-                    <p className="error-message">{errorHosts}</p>
-                )}
-
-                {loadingHosts && hosts.length === 0 && (
-                    <p>Carregando ativos...</p>
-                )}
-
                 <table>
                     <thead>
                         <tr>
@@ -244,6 +236,14 @@ export function Hosts(){
                         ))} 
                     </tbody>
                 </table>
+
+                {errorHosts && (
+                    <p className="message error-message">{errorHosts}</p>
+                )}
+
+                {loadingHosts && hosts.length === 0 && (
+                    <p className="message">Carregando host encontrados...</p>
+                )}
             </section>
         </main>
     )

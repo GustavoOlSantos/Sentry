@@ -333,6 +333,12 @@
     cursor: pointer;
 }
 
+.message {
+    font-size: 13pt !important;
+    margin-top: 20px;
+    padding: 0 10px;
+}
+
 @media (max-width: 768px) {
     .filter-table {
         flex-wrap: wrap;
