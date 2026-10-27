@@ -5,6 +5,7 @@ import '../../styles/hosts.css';
 
 import api from "../../services/api";
 import { SideBar } from "../../components/sidebar";
+import Modal from '../../components/modal';
 
 export function Hosts(){
 
@@ -16,6 +17,7 @@ export function Hosts(){
     const [hosts, setHosts] = useState([]);
     const [loadingHosts, setLoadingHosts] = useState(false);
     const [errorHosts, setErrorHosts] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const onlineHosts = hosts.filter( host => host.status?.toUpperCase() === 'UP').length;
     const offlineHosts = hosts.filter(host => host.status?.toUpperCase() === 'DOWN').length;
@@ -183,7 +185,7 @@ export function Hosts(){
 
                     <tbody>
                         {filteredHosts.map(host => (
-                            <tr key={host.id ?? host.ipAddress} className="clickable">
+                            <tr key={host.id ?? host.ipAddress} className="clickable" onClick={() => setIsModalOpen(true)} >
                                 <td>
                                     <span className="row">
                                         <i className="fa-solid fa-server big"></i>
@@ -245,6 +247,12 @@ export function Hosts(){
                     <p className="message">Carregando host encontrados...</p>
                 )}
             </section>
+
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Detalhes do ativo">
+                <p><strong>IP:</strong> 192.168.1.10</p>
+                <p><strong>Sistema operacional:</strong> Linux Ubuntu 21</p>
+                <p><strong>Status:</strong> Online</p>
+            </Modal>
         </main>
     )
 }
