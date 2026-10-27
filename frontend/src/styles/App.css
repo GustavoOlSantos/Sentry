@@ -86,7 +86,7 @@ footer > span {
     border: 1px solid var(--border-subtle);
     border-radius: 12px;
 
-    background: var(--card-bg);
+    background: var(--bg-surface);
     color: var(--text-primary);
 
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -122,6 +122,59 @@ footer > span {
 
 .modal-body {
     line-height: 1.6;
+}
+
+.host-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.detail-group {
+    background: var(--bg-surface-hover);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.detail-group h3 {
+    margin-bottom: 1rem;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.detail-group p {
+    margin: .5rem 0;
+    color: #d1d5db;
+}
+
+.services-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.services-table th,
+.services-table td {
+    padding: .75rem;
+    text-align: left;
+    border-bottom: 1px solid #374151;
+}
+
+.services-table th {
+    color: #fff;
+}
+
+.services-table td {
+    color: #d1d5db;
+}
+
+.status-text.online {
+    color: #22c55e;
+    font-weight: bold;
+}
+
+.status-text.offline {
+    color: #ef4444;
+    font-weight: bold;
 }
 
 @keyframes modal-appear {
