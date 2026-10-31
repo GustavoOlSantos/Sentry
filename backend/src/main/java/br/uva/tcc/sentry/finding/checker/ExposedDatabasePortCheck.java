@@ -28,6 +28,13 @@ public class ExposedDatabasePortCheck implements ConfigCheck {
             9200, "Elasticsearch"
     );
 
+    private static final String CODE = "EXPOSED_DATABASE_PORT";
+    private static final String TITLE = "Porta de banco de dados exposta";
+    private static final String DESCRIPTION =
+            "Porta de banco de dados acessível pela rede escaneada. Bancos de dados normalmente não "
+                    + "deveriam ser expostos fora da rede interna/VPC. Recomendação: restringir via "
+                    + "firewall/security group ao IP dos servidores de aplicação.";
+
     private final FindingFactory findingFactory;
 
     public ExposedDatabasePortCheck(FindingFactory findingFactory) {
@@ -42,15 +49,19 @@ public class ExposedDatabasePortCheck implements ConfigCheck {
             String dbName = SENSITIVE_DB_PORTS.get(service.getPort());
 
             if (dbName != null) {
+                String evidence = dbName + " na porta " + service.getPort() + "/" + service.getProtocol()
+                        + " em " + host.asset().getIpAddress();
+
                 findings.add(
                     findingFactory.fromPolicyViolation(
                         host,
                         service,
+                        CODE,
+                        TITLE,
+                        DESCRIPTION,
                         Severity.HIGH,
-                        "EXPOSED_DATABASE_PORT",
-                        "Porta de " + dbName + " (" + service.getPort() + ") acessível pela rede escaneada. "
-                            + "Bancos de dados normalmente não deveriam ser expostos fora da rede interna/VPC. "
-                            + "Recomendação: restringir via firewall/security group ao IP dos servidores de aplicação."
+                        evidence,
+                        null
                     )
                 );
             }

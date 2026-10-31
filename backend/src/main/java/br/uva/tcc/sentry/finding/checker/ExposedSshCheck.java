@@ -22,6 +22,14 @@ public class ExposedSshCheck implements ConfigCheck {
 
     private static final int SSH_PORT = 22;
 
+    private static final String CODE = "SSH_EXPOSED";
+    private static final String TITLE = "Porta SSH exposta";
+    private static final String DESCRIPTION =
+            "Porta SSH acessível pela rede escaneada. Não confirma se root login está habilitado "
+                    + "(isso exigiria tentativa de autenticação, fora do escopo deste scanner), mas é um "
+                    + "ponto de atenção: recomendado restringir por IP de origem, usar autenticação por "
+                    + "chave e desabilitar PermitRootLogin manualmente.";
+
     private final FindingFactory findingFactory;
 
     public ExposedSshCheck(FindingFactory findingFactory) {
@@ -34,16 +42,19 @@ public class ExposedSshCheck implements ConfigCheck {
 
         for (Service service : host.services()) {
             if (service.getPort() == SSH_PORT && "open".equals(service.getState())) {
+                String evidence = "Porta " + service.getPort() + "/" + service.getProtocol()
+                        + " aberta em " + host.asset().getIpAddress();
+
                 findings.add(
                     findingFactory.fromPolicyViolation(
                         host,
                         service,
+                        CODE,
+                        TITLE,
+                        DESCRIPTION,
                         Severity.MEDIUM,
-                        "SSH_EXPOSED",
-                        "Porta SSH (22) acessível pela rede escaneada. Não confirma se root login está habilitado "
-                            + "(isso exigiria tentativa de autenticação, fora do escopo deste scanner), mas é um "
-                            + "ponto de atenção: recomendado restringir por IP de origem, usar autenticação por "
-                            + "chave e desabilitar PermitRootLogin manualmente."
+                        evidence,
+                        null
                     )
                 );
             }

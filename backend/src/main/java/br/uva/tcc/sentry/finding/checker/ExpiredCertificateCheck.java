@@ -37,6 +37,17 @@ public class ExpiredCertificateCheck implements ConfigCheck {
     private static final long EXPIRING_SOON_THRESHOLD_DAYS = 30;
     private static final int DEFAULT_HANDSHAKE_TIMEOUT_MILLIS = 5000;
 
+    private static final String EXPIRED_CODE = "EXPIRED_SSL_CERT";
+    private static final String EXPIRED_TITLE = "Certificado SSL/TLS expirado";
+    private static final String EXPIRED_DESCRIPTION =
+            "Certificado SSL/TLS expirado. Conexões podem ser rejeitadas por clientes e navegadores, "
+                    + "além do risco de segurança.";
+
+    private static final String EXPIRING_SOON_CODE = "SSL_CERT_EXPIRING_SOON";
+    private static final String EXPIRING_SOON_TITLE = "Certificado SSL/TLS perto de expirar";
+    private static final String EXPIRING_SOON_DESCRIPTION =
+            "Certificado SSL/TLS perto de expirar. Renovar com antecedência pra evitar interrupção.";
+
     private final int handshakeTimeoutMillis;
 
     public ExpiredCertificateCheck() {
@@ -99,26 +110,24 @@ public class ExpiredCertificateCheck implements ConfigCheck {
         Date now = new Date();
 
         if (notAfter.before(now)) {
+            String evidence = "Certificado de " + host.asset().getIpAddress() + ":" + service.getPort()
+                    + " expirado desde " + notAfter + ".";
+
             return Optional.of(findingFactory.fromPolicyViolation(
-                host,
-                service,
-                Severity.HIGH,
-                "EXPIRED_SSL_CERT",
-                "Certificado SSL/TLS expirado desde " + notAfter
-                    + ". Conexões podem ser rejeitadas por clientes e navegadores, além do risco de segurança."
+                host, service, EXPIRED_CODE, EXPIRED_TITLE, EXPIRED_DESCRIPTION,
+                Severity.HIGH, evidence, null
             ));
         }
 
         long daysLeft = (notAfter.getTime() - now.getTime()) / (1000L * 60 * 60 * 24);
 
         if (daysLeft <= EXPIRING_SOON_THRESHOLD_DAYS) {
+            String evidence = "Certificado de " + host.asset().getIpAddress() + ":" + service.getPort()
+                    + " expira em " + daysLeft + " dia(s) (" + notAfter + ").";
+
             return Optional.of(findingFactory.fromPolicyViolation(
-                host,
-                service,
-                Severity.MEDIUM,
-                "SSL_CERT_EXPIRING_SOON",
-                "Certificado SSL/TLS expira em " + daysLeft
-                    + " dias (" + notAfter + "). Renovar com antecedência."
+                host, service, EXPIRING_SOON_CODE, EXPIRING_SOON_TITLE, EXPIRING_SOON_DESCRIPTION,
+                Severity.MEDIUM, evidence, null
             ));
         }
 

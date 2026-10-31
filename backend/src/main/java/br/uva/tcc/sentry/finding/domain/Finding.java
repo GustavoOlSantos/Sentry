@@ -57,6 +57,17 @@ public class Finding {
     @Column(nullable = false, length = 20)
     private FindingStatus status;
 
+    /**
+     * Identificador estável e curto da regra/vulnerabilidade que gerou o
+     * finding — o CVE ID (ex.: "CVE-2021-41773") para findings de
+     * vulnerabilidade, ou um código de regra (ex.: "SSH_EXPOSED") para
+     * findings de violação de política. É isso que diferencia ocorrências
+     * do mesmo tipo entre si de forma programática (agrupar, deduplicar,
+     * filtrar), separado do título, que é só o texto pra exibição.
+     */
+    @Column(length = 60)
+    private String code;
+
     private String title;
 
     @Column(columnDefinition = "TEXT")
@@ -76,6 +87,7 @@ public class Finding {
         return new StringBuilder()
                 .append("Finding {")
                 .append("id=").append(id)
+                .append(", code=").append(code)
                 .append(", type=").append(type)
                 .append(", severity=").append(severity)
                 .append(", status=").append(status)
