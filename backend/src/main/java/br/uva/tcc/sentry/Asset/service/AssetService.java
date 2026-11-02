@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.uva.tcc.sentry.Asset.DTO.AssetResponse;
+import br.uva.tcc.sentry.Asset.DTO.AssetSummaryResponse;
 import br.uva.tcc.sentry.Asset.domain.Asset;
 import br.uva.tcc.sentry.Asset.repository.AssetRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -27,6 +28,10 @@ public class AssetService {
                 return assets.stream()
                 .map(AssetResponse::from)
                 .toList();
+        }
+
+        public List<AssetSummaryResponse> findAllAssetSummary() {
+            return assetRepository.findAllAssetSummary();
         }
 
         @Transactional(readOnly = true)

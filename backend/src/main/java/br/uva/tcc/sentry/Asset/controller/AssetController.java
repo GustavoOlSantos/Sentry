@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.uva.tcc.sentry.Asset.DTO.AssetResponse;
+import br.uva.tcc.sentry.Asset.DTO.AssetSummaryResponse;
 import br.uva.tcc.sentry.Asset.domain.Asset;
 import br.uva.tcc.sentry.Asset.service.AssetService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,11 @@ public class AssetController {
     @GetMapping("")
     public List<AssetResponse> findAll(){
         return assetService.findAll();
+    }
+
+    @GetMapping("/summary")
+    public List<AssetSummaryResponse> findAllAssetSummary(){
+        return assetService.findAllAssetSummary();
     }
 
     @GetMapping("/{id}")

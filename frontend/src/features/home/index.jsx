@@ -1,33 +1,129 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useMemo} from 'react';
 import  {useNavigate} from 'react-router-dom';
+
+import api from '../../services/api';
 
 import '../../styles/home.css';
 import { SideBar } from '../../components/sidebar';
 
 function Home() {
     const navigate = useNavigate();
-    const [ativos_monitorados, setAtivosMonitorados] = useState(200);
-    const [ativos_app, setAtivosApp] = useState(80);
-    const [ativos_infr, setAtivosInfr] = useState(120);
 
-    const [vuln_low, setVulLow] = useState(15);
-    const [vuln_med, setVulMed] = useState(20);
-    const [vuln_high, setVulHi] = useState(30);
-    const [vuln_crit, setVulCrut] = useState(2);
-    const [vuln_resolv, setVulRes] = useState(33);
+    const [assets, setAssets] = useState([]);
+
+    const [vuln_low, setVulLow] = useState(0);
+    const [vuln_med, setVulMed] = useState(0);
+    const [vuln_high, setVulHi] = useState(0);
+    const [vuln_crit, setVulCrut] = useState(0);
+    const [vuln_resolv, setVulRes] = useState(0);
 
     const [vuln_total_chart, setVulnTotalChart] = useState(0);
-    const [vuln_gradient, setVulnGradient] = useState(
-        'conic-gradient(transparent 0% 100%)'
-    );
+    const [vuln_gradient, setVulnGradient] = useState('conic-gradient(transparent 0% 100%)');
+
+    
+
+    const getOSCategory = (operatingSystem) => {
+        const os = (operatingSystem ?? '').toLowerCase();
+
+        if (os.includes('windows')) return 'windows';
+        if (os.includes('mac') || os.includes('darwin')) return 'mac';
+
+        if (/linux|ubuntu|debian|centos|red hat|redhat|fedora|alpine/.test(os)) {
+            return 'linux';
+        }
+
+        return 'unknown';
+    };
+
+    const assetStats = useMemo(() => {
+        const stats = {
+            total: assets.length,
+            windows: 0,
+            linux: 0,
+            mac: 0,
+            unknown: 0
+        };
+
+        assets.forEach(asset => {
+            const category = getOSCategory(asset.operatingSystem);
+            stats[category]++;
+        });
+
+        return {
+            ...stats,
+            percentages: {
+                windows: stats.total ? (stats.windows / stats.total) * 100 : 0,
+                linux: stats.total ? (stats.linux / stats.total) * 100 : 0,
+                mac: stats.total ? (stats.mac / stats.total) * 100 : 0,
+                unknown: stats.total ? (stats.unknown / stats.total) * 100 : 0
+            }
+        };
+    }, [assets]);
+
+    const vulnStats = useMemo(() => {
+        const stats = {
+            total: 0,
+            low: 0,
+            medium: 0,
+            high: 0,
+            critical: 0,
+            resolved: 0
+        };
+
+        assets.forEach(asset => {
+            const findings = asset.findings ?? [];
+
+            findings.forEach(finding => {
+                stats.total++;
+
+                if (finding.status === 'RESOLVED' || finding.status === 'VALIDATED') {
+                    stats.resolved++;
+                }
+                else{
+                    switch (finding.severity) {
+                    case 'LOW':
+                        stats.low++;
+                        break;
+                    case 'MEDIUM':
+                        stats.medium++;
+                        break;
+                    case 'HIGH':
+                        stats.high++;
+                        break;
+                    case 'CRITICAL':
+                        stats.critical++;
+                        break;
+                }
+                }
+            });
+        });
+
+        return stats;
+    }, [assets]);
+
+   useEffect(() => {
+        api.get('/asset')
+        .then(response => {
+            const data = response.data;
+
+            setAssets(data);
+
+            if (data.length === 0) {
+                console.warn("Nenhum ativo encontrado");
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching assets:', error);
+        });
+    }, []);
 
     useEffect(() => {
         const values = [
-            vuln_low,
-            vuln_med,
-            vuln_high,
-            vuln_crit,
-            vuln_resolv
+            vulnStats.low,
+            vulnStats.medium,
+            vulnStats.high,
+            vulnStats.critical,
+            vulnStats.resolved
         ].map(value => Math.max(0, Number(value) || 0));
 
         const total = values.reduce((sum, value) => sum + value, 0);
@@ -51,7 +147,7 @@ function Home() {
 
         setVulnTotalChart(total);
         setVulnGradient(`conic-gradient(${segments.join(', ')})`);
-    }, [vuln_low, vuln_med, vuln_high, vuln_crit, vuln_resolv]);
+    }, [vulnStats.low, vulnStats.medium, vulnStats.high, vulnStats.critical, vulnStats.resolved]);
 
   return (
     <main>
@@ -67,27 +163,53 @@ function Home() {
                         <section className="home_cards section assets_card">
                             <p>Ativos monitorados</p>
 
-                            <h3>{ativos_monitorados}</h3>
+                            <h3>{assetStats.total}</h3>
 
                             <div className="assets_progress">
-                                <span className="assets_progress_infr" style={{ width: `${ativos_infr}%` }} />
+                                <span
+                                    className="assets_progress_win"
+                                    style={{ width: `${assetStats.percentages.windows}%` }}
+                                />
 
-                                <span className="assets_progress_app" style={{ width: `${ativos_app}%` }} />
+                                <span
+                                    className="assets_progress_lin"
+                                    style={{ width: `${assetStats.percentages.linux}%` }}
+                                />
+
+                                <span
+                                    className="assets_progress_mac"
+                                    style={{ width: `${assetStats.percentages.mac}%` }}
+                                />
+
+                                <span
+                                    className="assets_progress_unk"
+                                    style={{ width: `${assetStats.percentages.unknown}%` }}
+                                />
                             </div>
                         </section>
 
                         <section className="home_cards section">
-                            <h4>Distribuição de ativos</h4>
+                            <h4>Distribuição por Sistema Operacional</h4>
 
                             <ul>
                                 <span>
-                                    <li className="blue-bullet">Infraestrutura</li>
-                                    <h4>{(ativos_infr/ativos_monitorados) * 100}%</h4>
+                                    <li className="win-bullet">Windows</li>
+                                    <h4>{Math.round(assetStats.percentages.windows)}%</h4>
                                 </span>
 
-                                <span>
-                                    <li className="purple-bullet">Aplicações</li>
-                                    <h4>{(ativos_app/ativos_monitorados) *  100}%</h4>
+                                 <span>
+                                    <li className="lin-bullet">Linux</li>
+                                    <h4>{Math.round(assetStats.percentages.linux)}%</h4>
+                                </span>
+
+                                 <span>
+                                    <li className="mac-bullet">macOS</li>
+                                    <h4>{Math.round(assetStats.percentages.mac)}%</h4>
+                                </span>
+
+                                 <span>
+                                    <li className="gray-bullet">Desconhecido</li>
+                                    <h4>{Math.round(assetStats.percentages.unknown)}%</h4>
                                 </span>
                             </ul>
                         </section>
@@ -99,7 +221,7 @@ function Home() {
                         <div className="vulnerability_chart">
                             <div className="vulnerability_donut" style={{ background: vuln_gradient }} >
                                 <div className="donut_center">
-                                    <strong>{vuln_total_chart}</strong>
+                                    <strong>{vulnStats.total}</strong>
                                     <p>Vulnerabilidades</p>
                                 </div>
                             </div>
@@ -107,27 +229,27 @@ function Home() {
                             <ul className="vulnerability_legend">
                                 <li>
                                     <span className="legend_color low" />
-                                    Baixa <strong>{vuln_low}</strong>
+                                    Baixa <strong>{vulnStats.low}</strong>
                                 </li>
 
                                 <li>
                                     <span className="legend_color medium" />
-                                    Média <strong>{vuln_med}</strong>
+                                    Média <strong>{vulnStats.medium}</strong>
                                 </li>
 
                                 <li>
                                     <span className="legend_color high" />
-                                    Alta <strong>{vuln_high}</strong>
+                                    Alta <strong>{vulnStats.high}</strong>
                                 </li>
                                 
                                 <li>
                                     <span className="legend_color critical" />
-                                    Crítica <strong>{vuln_crit}</strong>
+                                    Crítica <strong>{vulnStats.critical}</strong>
                                 </li>
 
                                 <li>
                                     <span className="legend_color resolved" />
-                                    Resolvidas <strong>{vuln_resolv}</strong>
+                                    Resolvidas <strong>{vulnStats.resolved}</strong>
                                 </li>
                             </ul>
                         </div>

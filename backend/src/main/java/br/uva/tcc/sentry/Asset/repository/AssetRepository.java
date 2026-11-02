@@ -1,6 +1,6 @@
 package br.uva.tcc.sentry.Asset.repository;
 
-import br.uva.tcc.sentry.Asset.DTO.AssetResponse;
+import br.uva.tcc.sentry.Asset.DTO.AssetSummaryResponse;
 import br.uva.tcc.sentry.Asset.domain.Asset;
 
 import java.util.List;
@@ -31,4 +31,21 @@ public interface AssetRepository extends JpaRepository<Asset, UUID> {
     @EntityGraph(attributePaths = "findings")
     @Query("SELECT a FROM Asset a WHERE a.id = :id")
     Optional<Asset> findByIdWithFindings(@Param("id") UUID id);
+
+    @Query("""
+        SELECT new br.uva.tcc.sentry.Asset.DTO.AssetSummaryResponse(
+            a.id,
+            a.ipAddress,
+            a.hostname,
+            a.macAddress,
+            a.operatingSystem,
+            a.status,
+            a.firstSeenAt,
+            a.lastSeenAt,
+            SIZE(a.services),
+            SIZE(a.findings)
+        )
+        FROM Asset a
+    """)
+    List<AssetSummaryResponse> findAllAssetSummary();
 }
