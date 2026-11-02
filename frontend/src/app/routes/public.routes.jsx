@@ -3,6 +3,7 @@ import NotFound from "../../features/not-found/";
 
 import NovoScan from "../../features/scan/novo-scan";
 import Hosts from "../../features/hosts";
+import Board from "../../features/board";
 
 export const publicRoutes = [
   {
@@ -16,6 +17,10 @@ export const publicRoutes = [
   {
     path: "/hosts",
     element: <Hosts />
+  },
+   {
+    path: "/board",
+    element: <Board />
   },
   {
     path: "*",

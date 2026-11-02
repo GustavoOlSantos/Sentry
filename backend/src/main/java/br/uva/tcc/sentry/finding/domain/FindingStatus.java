@@ -5,5 +5,6 @@ public enum FindingStatus {
     IN_PROGRESS,
     RESOLVED,
     VALIDATED,
+    JUSTIFIED,
     FAILED_VALIDATION
 }

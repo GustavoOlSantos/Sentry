@@ -1,6 +1,7 @@
 .hosts-container {
     display: flex;
     gap: 20px;
+    max-height: none;
 }
 
 /* Status dos ativos */

@@ -17,7 +17,7 @@ export function SideBar() {
         </li>
 
         <li>
-          <NavLink to="/cards">
+          <NavLink to="/board">
             <i className="fa-brands fa-trello"></i>
             <span>
                 Correções Pendentes

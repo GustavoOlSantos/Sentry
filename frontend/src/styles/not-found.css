@@ -2,6 +2,7 @@
 .not-found {
   min-height: 100vh;
   min-height: calc(100dvh - 150px);
+  max-height: none;
   width: calc(100% - 20px);
   box-sizing: border-box;
   display: flex;
