@@ -3,6 +3,9 @@ package br.uva.tcc.sentry.Asset.domain;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import br.uva.tcc.sentry.finding.domain.Finding;
+
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
@@ -43,4 +46,7 @@ public class Asset {
 
     @OneToMany(mappedBy = "asset", fetch = FetchType.LAZY)
     private List<Service> services = new ArrayList<>();
+
+    @OneToMany(mappedBy = "asset", fetch = FetchType.LAZY)
+    private List<Finding> findings = new ArrayList<>();
 }

@@ -1,6 +1,7 @@
 package br.uva.tcc.sentry.Asset.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.uva.tcc.sentry.Asset.DTO.AssetResponse;
 import br.uva.tcc.sentry.Asset.domain.Asset;
@@ -15,24 +16,35 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AssetService {
     
-    private final AssetRepository assetRepository;
+        private final AssetRepository assetRepository;
 
-    public List<AssetResponse> findAll(){
-            return assetRepository.findAllWithServices().stream()
-            .map(AssetResponse::from)
-            .toList();
-    }
+        @Transactional(readOnly = true)
+        public List<AssetResponse> findAll() {
+                var assets = assetRepository.findAllWithServices();
 
-    public AssetResponse findAById(UUID id){
-            return assetRepository.findByIdWithServices(id).orElseThrow(() -> new EntityNotFoundException("Ativo não encontrado: " + id));
-    }
+                assetRepository.findAllWithFindings();
+
+                return assets.stream()
+                .map(AssetResponse::from)
+                .toList();
+        }
+
+        @Transactional(readOnly = true)
+        public AssetResponse findById(UUID id) {
+                var asset = assetRepository.findByIdWithServices(id)
+                .orElseThrow(() -> new EntityNotFoundException("Asset não encontrado"));
+
+                assetRepository.findByIdWithFindings(id);
+
+                return AssetResponse.from(asset);
+        }
 
     public void deleteAById(UUID id){
-            assetRepository.deleteById(id);
+        assetRepository.deleteById(id);
     }
 
     public Asset editById(Asset asset){
-            return assetRepository.save(asset);
+        return assetRepository.save(asset);
     }
 
 }

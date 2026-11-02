@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import br.uva.tcc.sentry.Asset.domain.Asset;
 import br.uva.tcc.sentry.Asset.domain.AssetStatus;
+import br.uva.tcc.sentry.finding.DTO.FindingResponse;
 
 public record AssetResponse(
     UUID id,
@@ -16,8 +17,8 @@ public record AssetResponse(
     AssetStatus status,
     LocalDateTime firstSeenAt,
     LocalDateTime lastSeenAt,
-    List<ServiceResponse> services
-    
+    List<ServiceResponse> services,
+    List<FindingResponse> findings
 ) {
     public static AssetResponse from(Asset asset) {
         return new AssetResponse(
@@ -32,6 +33,10 @@ public record AssetResponse(
             asset.getServices()
                 .stream()
                 .map(ServiceResponse::from)
+                .toList(),
+            asset.getFindings()
+                .stream()
+                .map(FindingResponse::from)
                 .toList()
         );
     }

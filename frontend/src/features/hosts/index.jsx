@@ -86,6 +86,16 @@ export function Hosts(){
         });
     }, [hosts, searchTerm, statusFilter, osFilter]);
 
+    const getFindingClass = (findings) => {
+        const count = findings?.length ?? 0;
+
+        if (count === 0) return 'none';
+        else if (count <= 15) return 'low';
+        else if (count <= 30) return 'medium';
+        else if (count <= 70) return 'high';
+        return 'critical';
+    };
+
     return(
         <main className="hosts-container">
             <SideBar></SideBar>
@@ -228,7 +238,11 @@ export function Hosts(){
                                     </span>
                                 </td>
 
-                                <td></td>
+                                <td>
+                                    <span className={`finding-count ${getFindingClass(host.findings)}`}>
+                                        {host.findings?.length ?? 0}
+                                    </span>
+                                </td>
 
                                 <td>
                                     <div className="row space">

@@ -29,7 +29,7 @@ public class AssetController {
 
     @GetMapping("/{id}")
     public AssetResponse findAById(UUID id){
-        return assetService.findAById(id);
+        return assetService.findById(id);
     }
 
     @DeleteMapping("/{id}")

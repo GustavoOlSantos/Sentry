@@ -10,15 +10,25 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 
 
 public interface AssetRepository extends JpaRepository<Asset, UUID> {
+
     @EntityGraph(attributePaths = "services")
-    @Query("SELECT a FROM Asset a")
+    @Query("SELECT DISTINCT a FROM Asset a")
     List<Asset> findAllWithServices();
+
+    @EntityGraph(attributePaths = "findings")
+    @Query("SELECT DISTINCT a FROM Asset a")
+    List<Asset> findAllWithFindings();
 
     @EntityGraph(attributePaths = "services")
     @Query("SELECT a FROM Asset a WHERE a.id = :id")
-    Optional<AssetResponse> findByIdWithServices(UUID id);
+    Optional<Asset> findByIdWithServices(@Param("id") UUID id);
+
+    @EntityGraph(attributePaths = "findings")
+    @Query("SELECT a FROM Asset a WHERE a.id = :id")
+    Optional<Asset> findByIdWithFindings(@Param("id") UUID id);
 }
