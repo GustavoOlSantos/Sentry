@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 import br.uva.tcc.sentry.finding.DTO.FindingBoardResponse;
+import br.uva.tcc.sentry.finding.DTO.UpdateFindingAssigneeResponse;
 import br.uva.tcc.sentry.finding.DTO.UpdateFindingStatusResponse;
 import br.uva.tcc.sentry.finding.domain.FindingStatus;
 import br.uva.tcc.sentry.finding.repository.FindingRepository;
@@ -26,7 +27,7 @@ public class FindingService {
             .toList();
     }
 
-    public UpdateFindingStatusResponse updateFindingStatus(UUID findingId, FindingStatus newStatus) {
+    public UpdateFindingStatusResponse updateFindingStatus(UUID findingId, FindingStatus newStatus, String justification) {
         var finding = findingRepository.findById(findingId).orElse(null);
         
         if (finding == null) {
@@ -35,8 +36,26 @@ public class FindingService {
             
         FindingStatus previousStatus = finding.getStatus();
         finding.setStatus(newStatus);
+
+        if(justification != null && !justification.trim().isEmpty()){
+            finding.setJustification(justification);
+        }
+
         findingRepository.save(finding);
 
         return new UpdateFindingStatusResponse(findingId, previousStatus, newStatus, "Status do finding atualizado com sucesso.");
+    }
+
+    public UpdateFindingAssigneeResponse updateFindingAssignee(UUID findingId, Long assigneeId) {
+        var finding = findingRepository.findById(findingId).orElse(null);
+
+        if (finding == null) {
+            return new UpdateFindingAssigneeResponse(assigneeId, findingId, "Finding não encontrado.");
+        }
+        
+        finding.setAssigneeId(assigneeId);
+        findingRepository.save(finding);
+
+        return new UpdateFindingAssigneeResponse(assigneeId, findingId, "Assignee do finding atualizado com sucesso.");
     }
 }

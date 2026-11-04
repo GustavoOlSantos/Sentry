@@ -20,6 +20,8 @@ public record FindingBoardResponse(
     LocalDateTime detectedAt,
     LocalDateTime resolvedAt,
     String evidence,
+    String justification,
+    Long assigneeId,
     AssetReferenceResponse asset,
     ServiceResponse service
 ) {
@@ -34,6 +36,8 @@ public record FindingBoardResponse(
             finding.getDetectedAt(),
             finding.getResolvedAt(),
             finding.getEvidence(),
+            finding.getJustification(),
+            finding.getAssigneeId(),
             AssetReferenceResponse.from(finding.getAsset()),
             ServiceResponse.from(finding.getService())
         );

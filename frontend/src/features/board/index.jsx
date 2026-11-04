@@ -35,10 +35,10 @@ const MANUAL_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'JUSTIFIED'];
 
 // TODO: trocar por GET /users quando o cadastro de usuários existir
 const MOCK_ASSIGNEES = [
-    { id: '1', name: 'Gustavo Santos', img: dev_gustavo },
-    { id: '2', name: 'Leandro Lucas', img: dev_leandro },
-    { id: '3', name: 'Sophia Trotte', img: dev_sophia },
-    { id: '4', name: 'Vivian Motta', img: dev_vivian}
+    { id: 1, name: 'Gustavo Santos', img: dev_gustavo },
+    { id: 2, name: 'Leandro Lucas', img: dev_leandro },
+    { id: 3, name: 'Sophia Trotte', img: dev_sophia },
+    { id: 4, name: 'Vivian Motta', img: dev_vivian}
 ];
 
 const formatDate = (value) =>
@@ -50,6 +50,7 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
     const [status, setStatus] = useState(finding.status);
     const [justification, setJustification] = useState(finding.justification ?? '');
     const [submitting, setSubmitting] = useState(false);
+    const [assigneeError, setAssigneeError] = useState(null);
     const [formError, setFormError] = useState(null);
 
     const needsJustification = status === 'JUSTIFIED';
@@ -77,9 +78,17 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
         if (!ok) setStatus(finding.status);
     };
 
-    const handleAssigneeChange = async (e) => {
-        const assigneeId = e.target.value;
-        await onChangeAssignee(finding, assigneeId);
+    const handleAssigneeChange = async (selected) => {
+        setAssigneeError(null);
+
+        const success = await onChangeAssignee(
+            finding.id,
+            selected?.value ?? null
+        );
+
+        if (!success) {
+            setAssigneeError('Não foi possível atualizar o responsável. A alteração foi desfeita.');
+        }
     };
 
     return (
@@ -96,6 +105,7 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
                             image: user.img,
                         })).find(option => option.value === finding.assigneeId) || null
                     }
+
                     options={MOCK_ASSIGNEES.map(user => ({
                         value: user.id,
                         label: user.name,
@@ -103,7 +113,7 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
                     }))}
 
                     onChange={(selected) =>
-                        onChangeAssignee(finding.id, selected?.value ?? null)
+                        handleAssigneeChange(selected)
                     }
                     isClearable
                     formatOptionLabel={(option) => (
@@ -113,6 +123,7 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
                         </>
                     )}
                 />
+                {assigneeError && <p className="manage-error">{assigneeError}</p>}
             </label>
 
             <form onSubmit={handleSubmit}>
@@ -225,15 +236,9 @@ export default function Board() {
     // Usado tanto pelo drag-and-drop quanto pelo formulário do drawer.
     // Retorna true/false para o chamador saber se deu certo.
     const changeStatus = async (finding, newStatus, justification) => {
-        const previous = {
-            status: finding.status,
-            justification: finding.justification
-        };
+        const previous = { status: finding.status, justification: finding.justification };
 
-        updateFindingLocal(finding.id, {
-            status: newStatus,
-            ...(justification !== undefined && { justification })
-        });
+        updateFindingLocal(finding.id, { status: newStatus, ...(justification !== undefined && { justification }) });
         setError(null);
 
         try {
@@ -255,15 +260,19 @@ export default function Board() {
         changeStatus(finding, column.dropStatus);
     };
 
-    const handleAssigneeChange = (id, assigneeId) => {
+    const handleAssigneeChange = async (id, assigneeId) => {
         const previous = findings.find(f => f.id === id)?.assigneeId;
+
         updateFindingLocal(id, { assigneeId });
 
-        api.patch(`/findings/${id}/assignee`, { assigneeId })
-        .catch(err => {
-            console.error("Falha ao atualizar o assignee da tarefa: ", err);
+        try {
+            await api.patch(`/findings/${id}/assignee`, { assigneeId });
+            return true;
+        } catch (err) {
+            console.error('Falha ao atualizar o responsável:', err);
             updateFindingLocal(id, { assigneeId: previous });
-        })
+            return false;
+        }
     };
 
     // ---------- Drag and drop ----------
@@ -431,6 +440,16 @@ export default function Board() {
                                                             {finding.severity || 'N/A'}
                                                         </span>
                                                     </div>
+                                                </div>
+
+                                                <div className='finding-card-footer'>
+                                                    <p>#{finding.id.slice(0, 8)}</p>
+
+                                                    {finding.assigneeId && (
+                                                        <>
+                                                            <img src={ MOCK_ASSIGNEES.find(user => user.id === finding.assigneeId)?.img } className="assignee-img" title={MOCK_ASSIGNEES.find(user => user.id === finding.assigneeId)?.name || finding.assigneeId} alt={finding.assigneeId} />
+                                                        </>
+                                                    )} 
                                                 </div>
                                             </article>
                                         ))

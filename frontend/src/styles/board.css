@@ -207,6 +207,7 @@ main.findings-page {
     font-size: 9pt;
 }
 
+
 .finding-status,
 .finding-type,
 .finding-severity {
@@ -275,6 +276,25 @@ main.findings-page {
     &.severity-critical {
         color: var(--severity-critical);
         background-color: var(--surface-critical);
+    }
+}
+
+.finding-card-footer{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    p {
+        color: var(--text-muted);
+        font-size: 10pt;
+        margin: 0;
+    }
+
+    img {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        object-fit: cover;
     }
 }
 
@@ -640,6 +660,7 @@ main.findings-page {
     background-color: var(--brand-primary);
     padding: 10px;
     border-radius: 5px;
+    border: 1px solid var(--border-default);
 }
 
 .findings-warning {

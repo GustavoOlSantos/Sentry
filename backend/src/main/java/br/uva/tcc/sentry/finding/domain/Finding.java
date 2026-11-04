@@ -57,6 +57,13 @@ public class Finding {
     @Column(nullable = false, length = 20)
     private FindingStatus status;
 
+    @Column(nullable = true, length = 500)
+    private String justification;
+
+    @Column(name = "assignee_id")
+    private Long AssigneeId;
+
+
     /**
      * Identificador estável e curto da regra/vulnerabilidade que gerou o
      * finding — o CVE ID (ex.: "CVE-2021-41773") para findings de
