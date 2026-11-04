@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Select from 'react-select';
 
@@ -5,16 +6,16 @@ import api from '../../services/api';
 import { SideBar } from "../../components/sidebar";
 import '../../styles/board.css';
 
-import dev_gustavo from '../../assets/devs/gustavo.jpg'
-import dev_leandro from '../../assets/devs/leandro.jpg'
-import dev_sophia from '../../assets/devs/sophia.jpg'
-import dev_vivian from '../../assets/devs/vivian.jpg'
+import dev_gustavo from '../../assets/devs/gustavo.jpg';
+import dev_leandro from '../../assets/devs/leandro.jpg';
+import dev_sophia from '../../assets/devs/sophia.jpg';
+import dev_vivian from '../../assets/devs/vivian.jpg';
 
 const FINDING_COLUMNS = [
-    { id: 'open',     title: 'ABERTO',       statuses: ['OPEN'],                             dropStatus: 'OPEN',        userDroppable: true },
+    { id: 'open', title: 'ABERTO', statuses: ['OPEN'], dropStatus: 'OPEN', userDroppable: true },
     { id: 'progress', title: 'EM ANDAMENTO', statuses: ['IN_PROGRESS', 'FAILED_VALIDATION'], dropStatus: 'IN_PROGRESS', userDroppable: true },
-    { id: 'resolved', title: 'RESOLVIDA',    statuses: ['RESOLVED'],                         dropStatus: 'RESOLVED',    userDroppable: true },
-    { id: 'closed',   title: 'FECHADA',      statuses: ['JUSTIFIED', 'VALIDATED'],           dropStatus: 'VALIDATED',   userDroppable: false } // só o sistema move pra cá
+    { id: 'resolved', title: 'RESOLVIDA', statuses: ['RESOLVED'], dropStatus: 'RESOLVED', userDroppable: true },
+    { id: 'closed', title: 'FECHADA', statuses: ['JUSTIFIED', 'VALIDATED'], dropStatus: 'VALIDATED', userDroppable: false }
 ];
 
 const STATUS_LABELS = {
@@ -38,7 +39,16 @@ const MOCK_ASSIGNEES = [
     { id: 1, name: 'Gustavo Santos', img: dev_gustavo },
     { id: 2, name: 'Leandro Lucas', img: dev_leandro },
     { id: 3, name: 'Sophia Trotte', img: dev_sophia },
-    { id: 4, name: 'Vivian Motta', img: dev_vivian}
+    { id: 4, name: 'Vivian Motta', img: dev_vivian }
+];
+
+const ASSIGNEE_OPTIONS = [
+    { value: '', label: 'Responsáveis: Todos' },
+    ...MOCK_ASSIGNEES.map(user => ({
+        value: user.id,
+        label: user.name,
+        image: user.img
+    }))
 ];
 
 const formatDate = (value) =>
@@ -54,7 +64,11 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
     const [formError, setFormError] = useState(null);
 
     const needsJustification = status === 'JUSTIFIED';
-    const dirty = status !== finding.status || (needsJustification && justification.trim() !== (finding.justification ?? '').trim());
+
+    const dirty =
+        status !== finding.status ||
+        (needsJustification &&
+            justification.trim() !== (finding.justification ?? '').trim());
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -98,37 +112,47 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
             <label className="manage-field">
                 <span>Responsável</span>
 
-                <Select className="assignee-select" classNamePrefix="assignee"
-                    value={ MOCK_ASSIGNEES .map(user => ({
-                            value: user.id,
-                            label: user.name,
-                            image: user.img,
-                        })).find(option => option.value === finding.assigneeId) || null
-                    }
-
+                <Select
+                    className="assignee-select"
+                    classNamePrefix="assignee"
+                    value={MOCK_ASSIGNEES.map(user => ({
+                        value: user.id,
+                        label: user.name,
+                        image: user.img
+                    })).find(option => option.value === finding.assigneeId) || null}
                     options={MOCK_ASSIGNEES.map(user => ({
                         value: user.id,
                         label: user.name,
-                        image: user.img,
+                        image: user.img
                     }))}
-
-                    onChange={(selected) =>
-                        handleAssigneeChange(selected)
-                    }
+                    onChange={handleAssigneeChange}
                     isClearable
                     formatOptionLabel={(option) => (
                         <>
-                            <img src={option.image} alt="" style={{ width: 24, height: 24, borderRadius: '50%', marginRight: 8, }} />
+                            <img
+                                src={option.image}
+                                alt=""
+                                style={{
+                                    width: 24,
+                                    height: 24,
+                                    borderRadius: '50%',
+                                    marginRight: 8
+                                }}
+                            />
                             {option.label}
                         </>
                     )}
                 />
-                {assigneeError && <p className="manage-error">{assigneeError}</p>}
+
+                {assigneeError && (
+                    <p className="manage-error">{assigneeError}</p>
+                )}
             </label>
 
             <form onSubmit={handleSubmit}>
                 <label className="manage-field">
                     <span>Status</span>
+
                     <select
                         value={status}
                         onChange={(e) => {
@@ -137,14 +161,16 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
                         }}
                         disabled={submitting}
                     >
-                        {/* se o status atual é do sistema, mostra ele desabilitado */}
                         {!MANUAL_STATUSES.includes(finding.status) && (
                             <option value={finding.status} disabled>
                                 {STATUS_LABELS[finding.status] || finding.status}
                             </option>
                         )}
+
                         {MANUAL_STATUSES.map(s => (
-                            <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                            <option key={s} value={s}>
+                                {STATUS_LABELS[s]}
+                            </option>
                         ))}
                     </select>
                 </label>
@@ -152,6 +178,7 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
                 {needsJustification && (
                     <label className="manage-field">
                         <span>Justificativa</span>
+
                         <textarea
                             rows={3}
                             value={justification}
@@ -162,9 +189,15 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
                     </label>
                 )}
 
-                {formError && <p className="manage-error">{formError}</p>}
+                {formError && (
+                    <p className="manage-error">{formError}</p>
+                )}
 
-                <button type="submit" className="btn-update-drawer" disabled={!dirty || submitting}>
+                <button
+                    type="submit"
+                    className="btn-update-drawer"
+                    disabled={!dirty || submitting}
+                >
                     {submitting ? 'Enviando...' : 'Enviar'}
                 </button>
             </form>
@@ -173,10 +206,16 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
 }
 
 export default function Board() {
+
     const [findings, setFindings] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // ---------- Filtros ----------
+    const [findingSearchTerm, setFindingSearchTerm] = useState('');
+    const [findingAssigneeFilter, setFindingAssigneeFilter] = useState('');
+
+    // ---------- Drag and drop / Drawer ----------
     const [draggedId, setDraggedId] = useState(null);
     const [dragOverColumn, setDragOverColumn] = useState(null);
     const [selectedId, setSelectedId] = useState(null);
@@ -193,21 +232,24 @@ export default function Board() {
 
     useEffect(() => () => clearTimeout(warningTimerRef.current), []);
 
+    // ---------- Busca dos findings ----------
     const fetchFindings = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
 
             const response = await api.get('/findings');
+
             const data = Array.isArray(response.data)
                 ? response.data
                 : response.data?.content ?? [];
 
             setFindings(data);
+
         } catch (err) {
             console.error('Falha ao buscar findings:', err);
             setError('Não foi possível carregar os findings.');
-            setFindings(mockFindings);
+            setFindings([]);
         } finally {
             setLoading(false);
         }
@@ -217,28 +259,64 @@ export default function Board() {
         fetchFindings();
     }, [fetchFindings]);
 
+    // ---------- Filtragem dos findings ----------
+    const filteredFindings = useMemo(() => {
+        const search = findingSearchTerm.trim().toLowerCase();
+
+        return (findings ?? []).filter((finding) => {
+
+            const matchesSearch =
+                (finding.title ?? '').toLowerCase().includes(search) ||
+                (finding.description ?? '').toLowerCase().includes(search) ||
+                (finding.asset?.ipAddress ?? '').toLowerCase().includes(search) ||
+                (finding.asset?.hostname ?? '').toLowerCase().includes(search) ||
+                (finding.vulnerability?.cveId ?? '').toLowerCase().includes(search);
+
+            const matchesAssignee =
+                findingAssigneeFilter === '' ||
+                finding.assigneeId === findingAssigneeFilter;
+
+            return matchesSearch && matchesAssignee;
+        });
+
+    }, [findings, findingSearchTerm, findingAssigneeFilter]);
+
+    // ---------- Agrupamento por status ----------
     const groupedFindings = useMemo(() => {
         return FINDING_COLUMNS.map(column => ({
             ...column,
-            findings: findings.filter(f => column.statuses.includes(f.status))
+            findings: filteredFindings.filter(f =>
+                column.statuses.includes(f.status)
+            )
         }));
-    }, [findings]);
+    }, [filteredFindings]);
 
+    // ---------- Finding selecionado ----------
     const selectedFinding = useMemo(
         () => findings.find(f => f.id === selectedId) ?? null,
         [findings, selectedId]
     );
 
-    // ---------- Atualização de status / assignee ----------
-    const updateFindingLocal = (id, patch) =>
-        setFindings(prev => prev.map(f => (f.id === id ? { ...f, ...patch } : f)));
+    // ---------- Atualização local ----------
+    const updateFindingLocal = (id, patch) => {
+        setFindings(prev =>
+            prev.map(f => f.id === id ? { ...f, ...patch } : f)
+        );
+    };
 
-    // Usado tanto pelo drag-and-drop quanto pelo formulário do drawer.
-    // Retorna true/false para o chamador saber se deu certo.
+    // ---------- Atualização de status ----------
     const changeStatus = async (finding, newStatus, justification) => {
-        const previous = { status: finding.status, justification: finding.justification };
 
-        updateFindingLocal(finding.id, { status: newStatus, ...(justification !== undefined && { justification }) });
+        const previous = {
+            status: finding.status,
+            justification: finding.justification
+        };
+
+        updateFindingLocal(finding.id, {
+            status: newStatus,
+            ...(justification !== undefined && { justification })
+        });
+
         setError(null);
 
         try {
@@ -246,31 +324,43 @@ export default function Board() {
                 status: newStatus,
                 justification
             });
+
             return true;
+
         } catch (err) {
             console.error('Falha ao atualizar status:', err);
+
             updateFindingLocal(finding.id, previous);
+
             setError('Não foi possível atualizar o finding. A alteração foi desfeita.');
+
             return false;
         }
     };
 
     const moveFinding = (finding, column) => {
         if (column.statuses.includes(finding.status)) return;
+
         changeStatus(finding, column.dropStatus);
     };
 
+    // ---------- Atualização de responsável ----------
     const handleAssigneeChange = async (id, assigneeId) => {
+
         const previous = findings.find(f => f.id === id)?.assigneeId;
 
         updateFindingLocal(id, { assigneeId });
 
         try {
             await api.patch(`/findings/${id}/assignee`, { assigneeId });
+
             return true;
+
         } catch (err) {
             console.error('Falha ao atualizar o responsável:', err);
+
             updateFindingLocal(id, { assigneeId: previous });
+
             return false;
         }
     };
@@ -278,12 +368,14 @@ export default function Board() {
     // ---------- Drag and drop ----------
     const handleDragStart = (event, finding) => {
         event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('text/plain', String(finding.id)); // necessário no Firefox
+        event.dataTransfer.setData('text/plain', String(finding.id));
+
         setDraggedId(finding.id);
     };
 
     const handleDragEnd = () => {
         const droppedOnLocked = lockedHoverRef.current;
+
         lockedHoverRef.current = null;
 
         setDraggedId(null);
@@ -297,21 +389,28 @@ export default function Board() {
     };
 
     const handleDragOver = (event, column) => {
+
         if (!column.userDroppable) {
             event.dataTransfer.dropEffect = 'none';
 
             const dragged = findings.find(f => f.id === draggedId);
             const isOwnColumn = dragged && column.statuses.includes(dragged.status);
+
             lockedHoverRef.current = isOwnColumn ? null : column.id;
 
             if (dragOverColumn) setDragOverColumn(null);
+
             return;
         }
 
         lockedHoverRef.current = null;
+
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
-        if (dragOverColumn !== column.id) setDragOverColumn(column.id);
+
+        if (dragOverColumn !== column.id) {
+            setDragOverColumn(column.id);
+        }
     };
 
     const handleDragLeave = (event) => {
@@ -327,10 +426,13 @@ export default function Board() {
 
     const handleDrop = (event, column) => {
         event.preventDefault();
+
         const finding = findings.find(f => f.id === draggedId);
+
         handleDragEnd();
 
-        if (!column.userDroppable) return; 
+        if (!column.userDroppable) return;
+
         if (finding) moveFinding(finding, column);
     };
 
@@ -339,23 +441,34 @@ export default function Board() {
 
     useEffect(() => {
         if (!selectedId) return;
-        const onKeyDown = (e) => e.key === 'Escape' && closeDrawer();
+
+        const onKeyDown = (e) =>
+            e.key === 'Escape' && closeDrawer();
+
         window.addEventListener('keydown', onKeyDown);
+
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [selectedId, closeDrawer]);
 
     return (
         <main className="findings-page">
+
             <SideBar />
 
             <section className="findings-content">
+
                 <header className="findings-header">
                     <div>
                         <h2>Findings</h2>
                         <p>Gerencie e acompanhe as ocorrências identificadas no ambiente.</p>
                     </div>
 
-                    <button className="btn-update" onClick={fetchFindings} disabled={loading} type="button">
+                    <button
+                        className="btn-update"
+                        onClick={fetchFindings}
+                        disabled={loading}
+                        type="button"
+                    >
                         <i className={`fa-solid fa-rotate ${loading ? 'fa-spin' : ''}`}></i>
                         {loading ? 'Atualizando...' : 'Atualizar'}
                     </button>
@@ -372,7 +485,12 @@ export default function Board() {
                     <div className="findings-warning" role="alert">
                         <i className="fa-solid fa-lock"></i>
                         <span>{warning}</span>
-                        <button type="button" onClick={() => setWarning(null)} aria-label="Fechar aviso">
+
+                        <button
+                            type="button"
+                            onClick={() => setWarning(null)}
+                            aria-label="Fechar aviso"
+                        >
                             <i className="fa-solid fa-xmark"></i>
                         </button>
                     </div>
@@ -384,100 +502,218 @@ export default function Board() {
                         <p>Carregando findings...</p>
                     </div>
                 ) : (
-                    <section className="kanban-board">
-                        {groupedFindings.map(column => (
-                            <article
-                                className={[
-                                    'kanban-column',
-                                    dragOverColumn === column.id ? 'drag-over' : '',
-                                    !column.userDroppable && draggedId ? 'drop-locked' : ''
-                                ].join(' ')}
-                                key={column.id}
-                                onDragOver={(e) => handleDragOver(e, column)}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDrop(e, column)}
-                            >
-                                <header className="kanban-column-header">
-                                    <div className="kanban-column-title">
-                                        <span className={`kanban-column-dot ${column.id}`}>•</span>
-                                        <h3>{column.title}</h3>
+                    <>
+
+                        {/* ---------- Filtros ---------- */}
+                        <section className="filter-table">
+
+                            <div className="filter-search">
+                                <i className="fa-solid fa-magnifying-glass"></i>
+
+                                <input
+                                    id="finding-search"
+                                    name="finding-search"
+                                    type="text"
+                                    placeholder="Buscar por CVE, IP ou hostname..."
+                                    value={findingSearchTerm}
+                                    onChange={(e) => setFindingSearchTerm(e.target.value)}
+                                />
+                            </div>
+
+                            <Select
+                                className="filter-select"
+                                classNamePrefix="filter"
+                                value={ASSIGNEE_OPTIONS.find(
+                                    option => option.value === findingAssigneeFilter
+                                )}
+                                options={ASSIGNEE_OPTIONS}
+                                onChange={(selected) =>
+                                    setFindingAssigneeFilter(selected?.value ?? '')
+                                }
+                                isClearable={false}
+                                placeholder="Responsáveis: Todos"
+                                formatOptionLabel={(option) => (
+                                    <div className="filter-option">
+                                        {option.image && (
+                                            <img
+                                                src={option.image}
+                                                alt=""
+                                                style={{
+                                                    width: 24,
+                                                    height: 24,
+                                                    borderRadius: '50%',
+                                                    marginRight: 8
+                                                }}
+                                            />
+                                        )}
+
+                                        {option.label}
                                     </div>
-                                    <span>{column.findings.length}</span>
-                                </header>
+                                )}
+                            />
 
-                                <div className="kanban-cards">
-                                    {column.findings.length > 0 ? (
-                                        column.findings.map(finding => (
-                                            <article
-                                                className={`finding-card ${draggedId === finding.id ? 'dragging' : ''}`}
-                                                key={finding.id}
-                                                draggable
-                                                onDragStart={(e) => handleDragStart(e, finding)}
-                                                onDragEnd={handleDragEnd}
-                                                onClick={() => setSelectedId(finding.id)}
-                                            >
-                                                <h4>{finding.title || 'Finding sem título'} - {finding?.asset?.ipAddress}</h4>
-                                                <p>{finding.description || 'Finding sem descrição'}</p>
+                        </section>
 
-                                                <div className="info-container">
-                                                    <div className="finding-card-info">
-                                                        <span className="finding-label">Status</span>
-                                                        <span className={`finding-status status-${finding.status?.toLowerCase()}`}>
-                                                            {STATUS_LABELS[finding.status] || finding.status}
-                                                        </span>
-                                                    </div>
+                        {/* ---------- Kanban ---------- */}
+                        <section className="kanban-board">
 
-                                                    <div className="finding-card-info">
-                                                        <span className="finding-label">Tipo</span>
-                                                        <span className={`finding-type type-${finding.type?.toLowerCase()}`}>
-                                                            {TYPE_LABELS[finding.type] || finding.type}
-                                                        </span>
-                                                    </div>
+                            {groupedFindings.map(column => (
 
-                                                    <div className="finding-card-info">
-                                                        <span className="finding-label">Severidade</span>
-                                                        <span className={`finding-severity severity-${finding.severity?.toLowerCase()}`}>
-                                                            {finding.severity || 'N/A'}
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                <article
+                                    className={[
+                                        'kanban-column',
+                                        dragOverColumn === column.id ? 'drag-over' : '',
+                                        !column.userDroppable && draggedId ? 'drop-locked' : ''
+                                    ].join(' ')}
+                                    key={column.id}
+                                    onDragOver={(e) => handleDragOver(e, column)}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={(e) => handleDrop(e, column)}
+                                >
 
-                                                <div className='finding-card-footer'>
-                                                    <p>#{finding.id.slice(0, 8)}</p>
+                                    <header className="kanban-column-header">
 
-                                                    {finding.assigneeId && (
-                                                        <>
-                                                            <img src={ MOCK_ASSIGNEES.find(user => user.id === finding.assigneeId)?.img } className="assignee-img" title={MOCK_ASSIGNEES.find(user => user.id === finding.assigneeId)?.name || finding.assigneeId} alt={finding.assigneeId} />
-                                                        </>
-                                                    )} 
-                                                </div>
-                                            </article>
-                                        ))
-                                    ) : (
-                                        <div className="kanban-empty">
-                                            <i className="fa-regular fa-folder-open"></i>
-                                            <p>Nenhum finding nesta etapa.</p>
+                                        <div className="kanban-column-title">
+                                            <span className={`kanban-column-dot ${column.id}`}>
+                                                •
+                                            </span>
+
+                                            <h3>{column.title}</h3>
                                         </div>
-                                    )}
-                                </div>
-                            </article>
-                        ))}
-                    </section>
+
+                                        <span>{column.findings.length}</span>
+
+                                    </header>
+
+                                    <div className="kanban-cards">
+
+                                        {column.findings.length > 0 ? (
+
+                                            column.findings.map(finding => (
+
+                                                <article
+                                                    className={`finding-card ${draggedId === finding.id ? 'dragging' : ''}`}
+                                                    key={finding.id}
+                                                    draggable
+                                                    onDragStart={(e) => handleDragStart(e, finding)}
+                                                    onDragEnd={handleDragEnd}
+                                                    onClick={() => setSelectedId(finding.id)}
+                                                >
+
+                                                    <h4>
+                                                        {finding.title || 'Finding sem título'}
+                                                        {' - '}
+                                                        {finding.asset?.ipAddress}
+                                                    </h4>
+
+                                                    <p>
+                                                        {finding.description || 'Finding sem descrição'}
+                                                    </p>
+
+                                                    <div className="info-container">
+
+                                                        <div className="finding-card-info">
+                                                            <span className="finding-label">Status</span>
+
+                                                            <span className={`finding-status status-${finding.status?.toLowerCase()}`}>
+                                                                {STATUS_LABELS[finding.status] || finding.status}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="finding-card-info">
+                                                            <span className="finding-label">Tipo</span>
+
+                                                            <span className={`finding-type type-${finding.type?.toLowerCase()}`}>
+                                                                {TYPE_LABELS[finding.type] || finding.type}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="finding-card-info">
+                                                            <span className="finding-label">Severidade</span>
+
+                                                            <span className={`finding-severity severity-${finding.severity?.toLowerCase()}`}>
+                                                                {finding.severity || 'N/A'}
+                                                            </span>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div className="finding-card-footer">
+
+                                                        <p>#{finding.id.slice(0, 8)}</p>
+
+                                                        {finding.assigneeId && (
+                                                            <img
+                                                                src={MOCK_ASSIGNEES.find(
+                                                                    user => user.id === finding.assigneeId
+                                                                )?.img}
+                                                                className="assignee-img"
+                                                                title={
+                                                                    MOCK_ASSIGNEES.find(
+                                                                        user => user.id === finding.assigneeId
+                                                                    )?.name || finding.assigneeId
+                                                                }
+                                                                alt={String(finding.assigneeId)}
+                                                            />
+                                                        )}
+
+                                                    </div>
+
+                                                </article>
+
+                                            ))
+
+                                        ) : (
+
+                                            <div className="kanban-empty">
+                                                <i className="fa-regular fa-folder-open"></i>
+                                                <p>Nenhum finding nesta etapa.</p>
+                                            </div>
+
+                                        )}
+
+                                    </div>
+
+                                </article>
+
+                            ))}
+
+                        </section>
+
+                    </>
                 )}
 
-                <div className={`drawer-overlay ${selectedFinding ? 'open' : ''}`} onClick={closeDrawer} />
+                {/* ---------- Drawer ---------- */}
+                <div
+                    className={`drawer-overlay ${selectedFinding ? 'open' : ''}`}
+                    onClick={closeDrawer}
+                />
 
-                <aside className={`finding-drawer ${selectedFinding ? 'open' : ''}`} aria-hidden={!selectedFinding}>
+                <aside
+                    className={`finding-drawer ${selectedFinding ? 'open' : ''}`}
+                    aria-hidden={!selectedFinding}
+                >
+
                     {selectedFinding && (
                         <>
+
                             <header className="drawer-header">
-                                <h3>{selectedFinding.title || 'Finding sem título'}</h3>
-                                <button type="button" className="drawer-close" onClick={closeDrawer} aria-label="Fechar">
+                                <h3>
+                                    {selectedFinding.title || 'Finding sem título'}
+                                </h3>
+
+                                <button
+                                    type="button"
+                                    className="drawer-close"
+                                    onClick={closeDrawer}
+                                    aria-label="Fechar"
+                                >
                                     <i className="fa-solid fa-xmark"></i>
                                 </button>
                             </header>
 
                             <div className="drawer-manage-container">
+
                                 <aside>
                                     <FindingManageForm
                                         key={selectedFinding.id}
@@ -488,22 +724,29 @@ export default function Board() {
                                 </aside>
 
                                 <div className="drawer-body">
+
                                     <section className="drawer-section">
+
                                         <h5>Descrição</h5>
-                                        <p>{selectedFinding.description || 'Sem descrição.'}</p>
+
+                                        <p>
+                                            {selectedFinding.description || 'Sem descrição.'}
+                                        </p>
 
                                         <div className="drawer-dates">
-                                            <h5>Criado em: </h5>
+                                            <h5>Criado em:</h5>
                                             <p>{formatDate(selectedFinding.detectedAt)}</p>
                                         </div>
 
                                         <div className="drawer-dates">
-                                            <h5>Resolvido em: </h5>
+                                            <h5>Resolvido em:</h5>
                                             <p>{formatDate(selectedFinding.resolvedAt)}</p>
                                         </div>
+
                                     </section>
 
                                     <div className="drawer-badges">
+
                                         <span className={`finding-status status-${selectedFinding.status?.toLowerCase()}`}>
                                             {STATUS_LABELS[selectedFinding.status] || selectedFinding.status}
                                         </span>
@@ -515,9 +758,11 @@ export default function Board() {
                                         <span className={`finding-severity severity-${selectedFinding.severity?.toLowerCase()}`}>
                                             {selectedFinding.severity || 'N/A'}
                                         </span>
+
                                     </div>
 
                                     <section className="drawer-section details">
+
                                         <h5>Detalhes</h5>
 
                                         <table>
@@ -531,6 +776,7 @@ export default function Board() {
                                                     <th>Versão</th>
                                                 </tr>
                                             </thead>
+
                                             <tbody>
                                                 <tr>
                                                     <td>{selectedFinding.asset?.ipAddress ?? '—'}</td>
@@ -543,18 +789,44 @@ export default function Board() {
                                             </tbody>
                                         </table>
 
-                                        <p><strong>hostname:</strong> {selectedFinding.asset?.hostname ?? '—'}</p>
-                                        <p><strong>MAC:</strong> {selectedFinding.asset?.macAddress ?? '—'}</p>
-                                        <p><strong>Sistema Operacional:</strong> {selectedFinding.asset?.operatingSystem ?? '—'}</p>
-                                        <p><strong>CPE:</strong> {selectedFinding.asset?.cpe ?? '—'}</p>
-                                        <p><strong>Informações extras:</strong> {selectedFinding.asset?.extraInfo ?? '—'}</p>
+                                        <p>
+                                            <strong>Hostname:</strong>{' '}
+                                            {selectedFinding.asset?.hostname ?? '—'}
+                                        </p>
+
+                                        <p>
+                                            <strong>MAC:</strong>{' '}
+                                            {selectedFinding.asset?.macAddress ?? '—'}
+                                        </p>
+
+                                        <p>
+                                            <strong>Sistema Operacional:</strong>{' '}
+                                            {selectedFinding.asset?.operatingSystem ?? '—'}
+                                        </p>
+
+                                        <p>
+                                            <strong>CPE:</strong>{' '}
+                                            {selectedFinding.asset?.cpe ?? '—'}
+                                        </p>
+
+                                        <p>
+                                            <strong>Informações extras:</strong>{' '}
+                                            {selectedFinding.asset?.extraInfo ?? '—'}
+                                        </p>
+
                                     </section>
+
                                 </div>
-                            </div>  
+
+                            </div>
+
                         </>
                     )}
+
                 </aside>
+
             </section>
+
         </main>
     );
 }
