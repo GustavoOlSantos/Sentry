@@ -503,6 +503,41 @@ main.findings-page {
         color: var(--text-secondary);
     }
 
+.assignee-select {
+    font-size: 11pt;
+}
+
+.assignee__control {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-default) !important;
+    border-radius: 6px !important;
+    min-height: 38px !important;
+}
+
+.assignee__control--is-focused {
+    border-color: var(--brand-primary, #247bff) !important;
+    box-shadow: none !important;
+}
+
+.assignee__menu {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-default);
+}
+
+.assignee__single-value,
+.assignee__option {
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.assignee__option--is-focused {
+    background: var(--bg-surface) !important;
+}
+
+.assignee__option--is-selected {
+    background: var(--brand-primary) !important;
+}
     select,
     textarea {
         width: 100%;
@@ -600,6 +635,13 @@ main.findings-page {
     cursor: not-allowed;
 }
 
+.btn-update-drawer {
+    color: var(--text-primary);
+    background-color: var(--brand-primary);
+    padding: 10px;
+    border-radius: 5px;
+}
+
 .findings-warning {
     position: fixed;
     top: 20px;
@@ -612,7 +654,7 @@ main.findings-page {
     gap: 10px;
     max-width: min(560px, calc(100vw - 40px));
     padding: 12px 15px;
-
+    
     border-radius: 8px;
     color: #fbbf24;
     background-color: #2a2314;
