@@ -1,26 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import api from '../../services/api';
 import { SideBar } from "../../components/sidebar";
 import '../../styles/board.css';
 
 const FINDING_COLUMNS = [
-    { id: 'open',     title: 'ABERTO',       statuses: ['OPEN'],                              dropStatus: 'OPEN' },
-    { id: 'progress', title: 'EM ANDAMENTO', statuses: ['IN_PROGRESS', 'FAILED_VALIDATION'],  dropStatus: 'IN_PROGRESS' },
-    { id: 'resolved', title: 'RESOLVIDA',    statuses: ['RESOLVED'],                          dropStatus: 'RESOLVED' },
-    { id: 'closed',   title: 'FECHADA',      statuses: ['JUSTIFIED', 'VALIDATED'],            dropStatus: 'VALIDATED' }
+    { id: 'open',     title: 'ABERTO',       statuses: ['OPEN'],                             dropStatus: 'OPEN',        userDroppable: true },
+    { id: 'progress', title: 'EM ANDAMENTO', statuses: ['IN_PROGRESS', 'FAILED_VALIDATION'], dropStatus: 'IN_PROGRESS', userDroppable: true },
+    { id: 'resolved', title: 'RESOLVIDA',    statuses: ['RESOLVED'],                         dropStatus: 'RESOLVED',    userDroppable: true },
+    { id: 'closed',   title: 'FECHADA',      statuses: ['JUSTIFIED', 'VALIDATED'],           dropStatus: 'VALIDATED',   userDroppable: false }
 ];
-
 const STATUS_LABELS = {
     OPEN: 'Aberto',
-    IN_PROGRESS: 'Em andamento',
-    FAILED_VALIDATION: 'Falha na validação',
+    IN_PROGRESS: 'Executando',
+    FAILED_VALIDATION: 'Inválida',
     RESOLVED: 'Resolvida',
     JUSTIFIED: 'Justificada',
     VALIDATED: 'Validada'
 };
 
 const TYPE_LABELS = {
-    VULNERABILITY: 'Vulnerabilidade',
+    VULNERABILITY: 'Vulner.',
     POLICY_VIOLATION: 'Política'
 };
 
@@ -35,6 +34,18 @@ export default function Board() {
     const [draggedId, setDraggedId] = useState(null);
     const [dragOverColumn, setDragOverColumn] = useState(null);
     const [selectedId, setSelectedId] = useState(null);
+
+    const [warning, setWarning] = useState(null);
+    const lockedHoverRef = useRef(null);
+    const warningTimerRef = useRef(null);
+
+    const showWarning = useCallback((message) => {
+        setWarning(message);
+        clearTimeout(warningTimerRef.current);
+        warningTimerRef.current = setTimeout(() => setWarning(null), 4000);
+    }, []);
+
+useEffect(() => () => clearTimeout(warningTimerRef.current), []);
 
     const fetchFindings = useCallback(async () => {
         try {
@@ -76,19 +87,19 @@ export default function Board() {
         setFindings(prev => prev.map(f => (f.id === id ? { ...f, status } : f)));
 
     const moveFinding = async (finding, column) => {
-        if (column.statuses.includes(finding.status)) return; // mesma coluna
+        if (column.statuses.includes(finding.status)) return;
 
         const previousStatus = finding.status;
         const newStatus = column.dropStatus;
 
-        updateStatusLocal(finding.id, newStatus); // optimistic
+        updateStatusLocal(finding.id, newStatus);
         setError(null);
 
         try {
             await api.post(`/findings/${finding.id}/status`, { status: newStatus });
         } catch (err) {
             console.error('Falha ao atualizar status:', err);
-            updateStatusLocal(finding.id, previousStatus); // rollback
+            updateStatusLocal(finding.id, previousStatus);
             setError('Não foi possível mover o finding. A alteração foi desfeita.');
         }
     };
@@ -101,19 +112,45 @@ export default function Board() {
     };
 
     const handleDragEnd = () => {
+        const droppedOnLocked = lockedHoverRef.current;
+        lockedHoverRef.current = null;
+
         setDraggedId(null);
         setDragOverColumn(null);
+
+        if (droppedOnLocked) {
+            showWarning(
+                'A coluna "Fechada" é preenchida automaticamente pelo sistema após a validação dos findings em "Resolvida". Não é possível mover cards para ela manualmente.'
+            );
+        }
     };
 
-    const handleDragOver = (event, columnId) => {
-        event.preventDefault(); // obrigatório para permitir o drop
+    const handleDragOver = (event, column) => {
+        if (!column.userDroppable) {
+            event.dataTransfer.dropEffect = 'none';
+
+            const dragged = findings.find(f => f.id === draggedId);
+            const isOwnColumn = dragged && column.statuses.includes(dragged.status);
+            lockedHoverRef.current = isOwnColumn ? null : column.id;
+
+            if (dragOverColumn) setDragOverColumn(null);
+            return;
+        }
+
+        lockedHoverRef.current = null;
+        event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
-        if (dragOverColumn !== columnId) setDragOverColumn(columnId);
+        if (dragOverColumn !== column.id) setDragOverColumn(column.id);
     };
 
     const handleDragLeave = (event) => {
-        // ignora quando o mouse só passa para um elemento filho
-        if (!event.currentTarget.contains(event.relatedTarget)) {
+        const next = event.relatedTarget;
+
+        // relatedTarget nulo = fim do drag (ou saiu da janela): preserva o ref pro dragEnd
+        if (!next) return;
+
+        if (!event.currentTarget.contains(next)) {
+            lockedHoverRef.current = null;
             setDragOverColumn(null);
         }
     };
@@ -122,6 +159,8 @@ export default function Board() {
         event.preventDefault();
         const finding = findings.find(f => f.id === draggedId);
         handleDragEnd();
+
+        if (!column.userDroppable) return; // guard extra
         if (finding) moveFinding(finding, column);
     };
 
@@ -159,6 +198,16 @@ export default function Board() {
                     </div>
                 )}
 
+                {warning && (
+                    <div className="findings-warning" role="alert">
+                        <i className="fa-solid fa-lock"></i>
+                        <span>{warning}</span>
+                        <button type="button" onClick={() => setWarning(null)} aria-label="Fechar aviso">
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                )}
+
                 {loading && findings.length === 0 ? (
                     <div className="findings-empty">
                         <i className="fa-solid fa-spinner fa-spin"></i>
@@ -167,10 +216,9 @@ export default function Board() {
                 ) : (
                     <section className="kanban-board">
                         {groupedFindings.map(column => (
-                            <article
-                                className={`kanban-column ${dragOverColumn === column.id ? 'drag-over' : ''}`}
+                            <article className={['kanban-column', dragOverColumn === column.id ? 'drag-over' : '', !column.userDroppable && draggedId ? 'drop-locked' : ''].join(' ')}
                                 key={column.id}
-                                onDragOver={(e) => handleDragOver(e, column.id)}
+                                onDragOver={(e) => handleDragOver(e, column)}
                                 onDragLeave={handleDragLeave}
                                 onDrop={(e) => handleDrop(e, column)}
                             >
@@ -269,7 +317,7 @@ export default function Board() {
                                     <span className={`finding-type type-${selectedFinding.type?.toLowerCase()}`}>
                                         {TYPE_LABELS[selectedFinding.type] || selectedFinding.type}
                                     </span>
-                                    
+
                                     <span className={`finding-severity severity-${selectedFinding.severity?.toLowerCase()}`}>
                                         {selectedFinding.severity || 'N/A'}
                                     </span>
