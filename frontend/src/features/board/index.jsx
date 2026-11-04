@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Select from 'react-select';
+
 import api from '../../services/api';
 import { SideBar } from "../../components/sidebar";
 import '../../styles/board.css';
+
+import dev_gustavo from '../../assets/devs/gustavo.jpg'
+import dev_leandro from '../../assets/devs/leandro.jpg'
+import dev_sophia from '../../assets/devs/sophia.jpg'
+import dev_vivian from '../../assets/devs/vivian.jpg'
 
 const FINDING_COLUMNS = [
     { id: 'open',     title: 'ABERTO',       statuses: ['OPEN'],                             dropStatus: 'OPEN',        userDroppable: true },
@@ -24,15 +31,14 @@ const TYPE_LABELS = {
     POLICY_VIOLATION: 'Política'
 };
 
-// Status que o usuário pode escolher manualmente (VALIDATED e FAILED_VALIDATION são do sistema)
 const MANUAL_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'JUSTIFIED'];
 
 // TODO: trocar por GET /users quando o cadastro de usuários existir
 const MOCK_ASSIGNEES = [
-    { id: '1', name: 'Gustavo Santos' },
-    { id: '2', name: 'Leandro Lucas' },
-    { id: '3', name: 'Sophia Trotte' },
-    { id: '4', name: 'Vivian Motta' }
+    { id: '1', name: 'Gustavo Santos', img: dev_gustavo },
+    { id: '2', name: 'Leandro Lucas', img: dev_leandro },
+    { id: '3', name: 'Sophia Trotte', img: dev_sophia },
+    { id: '4', name: 'Vivian Motta', img: dev_vivian}
 ];
 
 const formatDate = (value) =>
@@ -71,21 +77,42 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
         if (!ok) setStatus(finding.status);
     };
 
+    const handleAssigneeChange = async (e) => {
+        const assigneeId = e.target.value;
+        await onChangeAssignee(finding, assigneeId);
+    };
+
     return (
         <section className="drawer-section drawer-manage">
             <h5>Gerenciar</h5>
 
             <label className="manage-field">
                 <span>Responsável</span>
-                <select
-                    value={finding.assigneeId ?? ''}
-                    onChange={(e) => onChangeAssignee(finding.id, e.target.value || null)}
-                >
-                    <option value="">Sem responsável</option>
-                    {MOCK_ASSIGNEES.map(user => (
-                        <option key={user.id} value={user.id}>{user.name}</option>
-                    ))}
-                </select>
+
+                <Select className="assignee-select" classNamePrefix="assignee"
+                    value={ MOCK_ASSIGNEES .map(user => ({
+                            value: user.id,
+                            label: user.name,
+                            image: user.img,
+                        })).find(option => option.value === finding.assigneeId) || null
+                    }
+                    options={MOCK_ASSIGNEES.map(user => ({
+                        value: user.id,
+                        label: user.name,
+                        image: user.img,
+                    }))}
+
+                    onChange={(selected) =>
+                        onChangeAssignee(finding.id, selected?.value ?? null)
+                    }
+                    isClearable
+                    formatOptionLabel={(option) => (
+                        <>
+                            <img src={option.image} alt="" style={{ width: 24, height: 24, borderRadius: '50%', marginRight: 8, }} />
+                            {option.label}
+                        </>
+                    )}
+                />
             </label>
 
             <form onSubmit={handleSubmit}>
@@ -126,7 +153,7 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
 
                 {formError && <p className="manage-error">{formError}</p>}
 
-                <button type="submit" className="btn-update" disabled={!dirty || submitting}>
+                <button type="submit" className="btn-update-drawer" disabled={!dirty || submitting}>
                     {submitting ? 'Enviando...' : 'Enviar'}
                 </button>
             </form>
@@ -169,6 +196,7 @@ export default function Board() {
         } catch (err) {
             console.error('Falha ao buscar findings:', err);
             setError('Não foi possível carregar os findings.');
+            setFindings(mockFindings);
         } finally {
             setLoading(false);
         }
@@ -227,10 +255,15 @@ export default function Board() {
         changeStatus(finding, column.dropStatus);
     };
 
-    // Mock: só em memória até existir endpoint
     const handleAssigneeChange = (id, assigneeId) => {
+        const previous = findings.find(f => f.id === id)?.assigneeId;
         updateFindingLocal(id, { assigneeId });
-        // TODO: api.patch(`/findings/${id}/assignee`, { assigneeId })
+
+        api.patch(`/findings/${id}/assignee`, { assigneeId })
+        .catch(err => {
+            console.error("Falha ao atualizar o assignee da tarefa: ", err);
+            updateFindingLocal(id, { assigneeId: previous });
+        })
     };
 
     // ---------- Drag and drop ----------
