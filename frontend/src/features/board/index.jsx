@@ -21,7 +21,7 @@ const STATUS_LABELS = {
 
 const TYPE_LABELS = {
     VULNERABILITY: 'Vulnerabilidade',
-    POLICY_VIOLATION: 'Violação de política'
+    POLICY_VIOLATION: 'Política'
 };
 
 const formatDate = (value) =>
@@ -139,174 +139,179 @@ export default function Board() {
         <main className="findings-page">
             <SideBar />
 
-            <header className="findings-header">
-                <div>
-                    <h2>Findings</h2>
-                    <p>Gerencie e acompanhe as ocorrências identificadas no ambiente.</p>
-                </div>
+            <section className="findings-content">
+                <header className="findings-header">
+                    <div>
+                        <h2>Findings</h2>
+                        <p>Gerencie e acompanhe as ocorrências identificadas no ambiente.</p>
+                    </div>
 
-                <button className="btn-update" onClick={fetchFindings} disabled={loading} type="button">
-                    <i className={`fa-solid fa-rotate ${loading ? 'fa-spin' : ''}`}></i>
-                    {loading ? 'Atualizando...' : 'Atualizar'}
-                </button>
-            </header>
+                    <button className="btn-update" onClick={fetchFindings} disabled={loading} type="button">
+                        <i className={`fa-solid fa-rotate ${loading ? 'fa-spin' : ''}`}></i>
+                        {loading ? 'Atualizando...' : 'Atualizar'}
+                    </button>
+                </header>
 
-            {error && (
-                <div className="findings-error">
-                    <i className="fa-solid fa-circle-exclamation"></i>
-                    {error}
-                </div>
-            )}
+                {error && (
+                    <div className="findings-error">
+                        <i className="fa-solid fa-circle-exclamation"></i>
+                        {error}
+                    </div>
+                )}
 
-            {loading && findings.length === 0 ? (
-                <div className="findings-empty">
-                    <i className="fa-solid fa-spinner fa-spin"></i>
-                    <p>Carregando findings...</p>
-                </div>
-            ) : (
-                <section className="kanban-board">
-                    {groupedFindings.map(column => (
-                        <article
-                            className={`kanban-column ${dragOverColumn === column.id ? 'drag-over' : ''}`}
-                            key={column.id}
-                            onDragOver={(e) => handleDragOver(e, column.id)}
-                            onDragLeave={handleDragLeave}
-                            onDrop={(e) => handleDrop(e, column)}
-                        >
-                            <header className="kanban-column-header">
-                                <div className="kanban-column-title">
-                                    <span className={`kanban-column-dot ${column.id}`}>•</span>
-                                    <h3>{column.title}</h3>
+                {loading && findings.length === 0 ? (
+                    <div className="findings-empty">
+                        <i className="fa-solid fa-spinner fa-spin"></i>
+                        <p>Carregando findings...</p>
+                    </div>
+                ) : (
+                    <section className="kanban-board">
+                        {groupedFindings.map(column => (
+                            <article
+                                className={`kanban-column ${dragOverColumn === column.id ? 'drag-over' : ''}`}
+                                key={column.id}
+                                onDragOver={(e) => handleDragOver(e, column.id)}
+                                onDragLeave={handleDragLeave}
+                                onDrop={(e) => handleDrop(e, column)}
+                            >
+                                <header className="kanban-column-header">
+                                    <div className="kanban-column-title">
+                                        <span className={`kanban-column-dot ${column.id}`}>•</span>
+                                        <h3>{column.title}</h3>
+                                    </div>
+                                    <span>{column.findings.length}</span>
+                                </header>
+
+                                <div className="kanban-cards">
+                                    {column.findings.length > 0 ? (
+                                        column.findings.map(finding => (
+                                            <article
+                                                className={`finding-card ${draggedId === finding.id ? 'dragging' : ''}`}
+                                                key={finding.id}
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, finding)}
+                                                onDragEnd={handleDragEnd}
+                                                onClick={() => setSelectedId(finding.id)}
+                                            >
+                                                <h4>{finding.title || 'Finding sem título'} - {finding?.asset?.ipAddress}</h4>
+                                                <p>{finding.description || 'Finding sem descrição'}</p>
+
+                                                <div className="info-container">
+                                                    <div className="finding-card-info">
+                                                        <span className="finding-label">Status</span>
+                                                        <span className={`finding-status status-${finding.status?.toLowerCase()}`}>
+                                                            {STATUS_LABELS[finding.status] || finding.status}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="finding-card-info">
+                                                        <span className="finding-label">Tipo</span>
+                                                        <span className={`finding-type type-${finding.type?.toLowerCase()}`}>
+                                                            {TYPE_LABELS[finding.type] || finding.type}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="finding-card-info">
+                                                        <span className="finding-label">Severidade</span>
+                                                        <span className={`finding-severity severity-${finding.severity?.toLowerCase()}`}>
+                                                            {finding.severity || 'N/A'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </article>
+                                        ))
+                                    ) : (
+                                        <div className="kanban-empty">
+                                            <i className="fa-regular fa-folder-open"></i>
+                                            <p>Nenhum finding nesta etapa.</p>
+                                        </div>
+                                    )}
                                 </div>
-                                <span>{column.findings.length}</span>
+                            </article>
+                        ))}
+                    </section>
+                )}
+                
+                <div className={`drawer-overlay ${selectedFinding ? 'open' : ''}`} onClick={closeDrawer} />
+
+                <aside className={`finding-drawer ${selectedFinding ? 'open' : ''}`} aria-hidden={!selectedFinding}>
+                    {selectedFinding && (
+                        <>
+                            <header className="drawer-header">
+                                <h3>{selectedFinding.title || 'Finding sem título'}</h3>
+                                <button type="button" className="drawer-close" onClick={closeDrawer} aria-label="Fechar">
+                                    <i className="fa-solid fa-xmark"></i>
+                                </button>
                             </header>
 
-                            <div className="kanban-cards">
-                                {column.findings.length > 0 ? (
-                                    column.findings.map(finding => (
-                                        <article
-                                            className={`finding-card ${draggedId === finding.id ? 'dragging' : ''}`}
-                                            key={finding.id}
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, finding)}
-                                            onDragEnd={handleDragEnd}
-                                            onClick={() => setSelectedId(finding.id)}
-                                        >
-                                            <h4>{finding.title || 'Finding sem título'} - {finding?.asset?.ipAddress}</h4>
-                                            <p>{finding.description || 'Finding sem descrição'}</p>
-
-                                            <div className="info-container">
-                                                <div className="finding-card-info">
-                                                    <span className="finding-label">Status</span>
-                                                    <span className={`finding-status status-${finding.status?.toLowerCase()}`}>
-                                                        {STATUS_LABELS[finding.status] || finding.status}
-                                                    </span>
-                                                </div>
-
-                                                <div className="finding-card-info">
-                                                    <span className="finding-label">Tipo</span>
-                                                    <span className={`finding-type type-${finding.type?.toLowerCase()}`}>
-                                                        {TYPE_LABELS[finding.type] || finding.type}
-                                                    </span>
-                                                </div>
-
-                                                <div className="finding-card-info">
-                                                    <span className="finding-label">Severidade</span>
-                                                    <span className={`finding-severity severity-${finding.severity?.toLowerCase()}`}>
-                                                        {finding.severity || 'N/A'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </article>
-                                    ))
-                                ) : (
-                                    <div className="kanban-empty">
-                                        <i className="fa-regular fa-folder-open"></i>
-                                        <p>Nenhum finding nesta etapa.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </article>
-                    ))}
-                </section>
-            )}
-            
-            <div className={`drawer-overlay ${selectedFinding ? 'open' : ''}`} onClick={closeDrawer} />
-
-            <aside className={`finding-drawer ${selectedFinding ? 'open' : ''}`} aria-hidden={!selectedFinding}>
-                {selectedFinding && (
-                    <>
-                        <header className="drawer-header">
-                            <h3>{selectedFinding.title || 'Finding sem título'}</h3>
-                            <button type="button" className="drawer-close" onClick={closeDrawer} aria-label="Fechar">
-                                <i className="fa-solid fa-xmark"></i>
-                            </button>
-                        </header>
-
-                        <div className="drawer-body">
-                            
-                            <section className="drawer-section">
-                                <h5>Descrição</h5>
-                                <p>{selectedFinding.description || 'Sem descrição.'}</p>
-
-                                <div className="drawer-dates">
-                                    <h5>Criado em: </h5>
-                                    <p>{formatDate(selectedFinding.detectedAt)}</p>
-                                </div>
-                                <div className="drawer-dates">
-                                    <h5>Resolvido em: </h5>
-                                    <p>{formatDate(selectedFinding.resolvedAt)}</p>
-                                </div>
-                            </section>
-
-                            <div className="drawer-badges">
-                                <span className={`finding-status status-${selectedFinding.status?.toLowerCase()}`}>
-                                    {STATUS_LABELS[selectedFinding.status] || selectedFinding.status}
-                                </span>
-                                <span className={`finding-type type-${selectedFinding.type?.toLowerCase()}`}>
-                                    {TYPE_LABELS[selectedFinding.type] || selectedFinding.type}
-                                </span>
-                                <span className={`finding-severity severity-${selectedFinding.severity?.toLowerCase()}`}>
-                                    {selectedFinding.severity || 'N/A'}
-                                </span>
-                            </div>
-
-                            <section className="drawer-section details">
-                                <h5>Detalhes</h5>
+                            <div className="drawer-body">
                                 
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>IP</th>
-                                            <th>Porta</th>
-                                            <th>Protocolo</th>
-                                            <th>Serviço</th>
-                                            <th>Produto</th>
-                                            <th>Versão</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>{selectedFinding.asset?.ipAddress ?? '—'}</td>
-                                            <td>{selectedFinding.service?.port ?? '—'}</td>
-                                            <td>{selectedFinding.service?.protocol ?? '—'}</td>
-                                            <td>{selectedFinding.service?.serviceName ?? '—'}</td>
-                                            <td>{selectedFinding.service?.product ?? '—'}</td>
-                                            <td>{selectedFinding.service?.version ?? '—'}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <section className="drawer-section">
+                                    <h5>Descrição</h5>
+                                    <p>{selectedFinding.description || 'Sem descrição.'}</p>
 
-                                <p><strong>hostname:</strong> {selectedFinding.asset?.hostname ?? '—'}</p>
-                                <p><strong>MAC:</strong> {selectedFinding.asset?.macAddress ?? '—'}</p>
-                                <p><strong>Sistema Operacional:</strong> {selectedFinding.asset?.operatingSystem ?? '—'}</p>
-                                <p><strong>CPE:</strong> {selectedFinding.asset?.cpe ?? '—'}</p>
-                                <p><strong>Informações extras:</strong> {selectedFinding.asset?.extraInfo ?? '—'}</p>
-                            </section>
-                        </div>
-                    </>
-                )}
-            </aside>
+                                    <div className="drawer-dates">
+                                        <h5>Criado em: </h5>
+                                        <p>{formatDate(selectedFinding.detectedAt)}</p>
+                                    </div>
+
+                                    <div className="drawer-dates">
+                                        <h5>Resolvido em: </h5>
+                                        <p>{formatDate(selectedFinding.resolvedAt)}</p>
+                                    </div>
+                                </section>
+
+                                <div className="drawer-badges">
+                                    <span className={`finding-status status-${selectedFinding.status?.toLowerCase()}`}>
+                                        {STATUS_LABELS[selectedFinding.status] || selectedFinding.status}
+                                    </span>
+
+                                    <span className={`finding-type type-${selectedFinding.type?.toLowerCase()}`}>
+                                        {TYPE_LABELS[selectedFinding.type] || selectedFinding.type}
+                                    </span>
+                                    
+                                    <span className={`finding-severity severity-${selectedFinding.severity?.toLowerCase()}`}>
+                                        {selectedFinding.severity || 'N/A'}
+                                    </span>
+                                </div>
+
+                                <section className="drawer-section details">
+                                    <h5>Detalhes</h5>
+                                    
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>IP</th>
+                                                <th>Porta</th>
+                                                <th>Protocolo</th>
+                                                <th>Serviço</th>
+                                                <th>Produto</th>
+                                                <th>Versão</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>{selectedFinding.asset?.ipAddress ?? '—'}</td>
+                                                <td>{selectedFinding.service?.port ?? '—'}</td>
+                                                <td>{selectedFinding.service?.protocol ?? '—'}</td>
+                                                <td>{selectedFinding.service?.serviceName ?? '—'}</td>
+                                                <td>{selectedFinding.service?.product ?? '—'}</td>
+                                                <td>{selectedFinding.service?.version ?? '—'}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <p><strong>hostname:</strong> {selectedFinding.asset?.hostname ?? '—'}</p>
+                                    <p><strong>MAC:</strong> {selectedFinding.asset?.macAddress ?? '—'}</p>
+                                    <p><strong>Sistema Operacional:</strong> {selectedFinding.asset?.operatingSystem ?? '—'}</p>
+                                    <p><strong>CPE:</strong> {selectedFinding.asset?.cpe ?? '—'}</p>
+                                    <p><strong>Informações extras:</strong> {selectedFinding.asset?.extraInfo ?? '—'}</p>
+                                </section>
+                            </div>
+                        </>
+                    )}
+                </aside>
+            </section>
         </main>
     );
 }

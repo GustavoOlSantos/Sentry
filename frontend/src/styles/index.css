@@ -154,10 +154,9 @@ code {
 }
 
 main {
-  margin: 10px;
-  width: calc(100vw - 20px) !important;
-  max-height: calc(100vh - 121px);
-  min-height: calc(100vh - 135px);
+    margin: 10px;
+    max-height: calc(100vh - 121px);
+    min-height: calc(100vh - 135px);
 }
 
 .request-success-backdrop{
