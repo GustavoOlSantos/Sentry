@@ -12,6 +12,7 @@ import br.uva.tcc.sentry.shared.domain.Severity;
 
 public record FindingBoardResponse(
     UUID id,
+    String code,
     FindingType type,
     Severity severity,
     FindingStatus status,
@@ -28,6 +29,7 @@ public record FindingBoardResponse(
     public static FindingBoardResponse from(Finding finding) {
         return new FindingBoardResponse(
             finding.getId(),
+            finding.getCode(),
             finding.getType(),
             finding.getSeverity(),
             finding.getStatus(),

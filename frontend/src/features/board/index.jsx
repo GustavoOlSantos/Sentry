@@ -266,15 +266,13 @@ export default function Board() {
         return (findings ?? []).filter((finding) => {
 
             const matchesSearch =
-                (finding.title ?? '').toLowerCase().includes(search) ||
+                (finding.code ?? '').toLowerCase().includes(search) ||
                 (finding.description ?? '').toLowerCase().includes(search) ||
                 (finding.asset?.ipAddress ?? '').toLowerCase().includes(search) ||
                 (finding.asset?.hostname ?? '').toLowerCase().includes(search) ||
                 (finding.vulnerability?.cveId ?? '').toLowerCase().includes(search);
 
-            const matchesAssignee =
-                findingAssigneeFilter === '' ||
-                finding.assigneeId === findingAssigneeFilter;
+            const matchesAssignee = findingAssigneeFilter === '' || finding.assigneeId === findingAssigneeFilter;
 
             return matchesSearch && matchesAssignee;
         });
@@ -727,7 +725,7 @@ export default function Board() {
 
                                     <section className="drawer-section">
 
-                                        <h5>Descrição</h5>
+                                        <h5>Descrição: {selectedFinding.code}</h5>
 
                                         <p>
                                             {selectedFinding.description || 'Sem descrição.'}
@@ -806,12 +804,12 @@ export default function Board() {
 
                                         <p>
                                             <strong>CPE:</strong>{' '}
-                                            {selectedFinding.asset?.cpe ?? '—'}
+                                            {selectedFinding.service?.cpe ?? '—'}
                                         </p>
 
                                         <p>
                                             <strong>Informações extras:</strong>{' '}
-                                            {selectedFinding.asset?.extraInfo ?? '—'}
+                                            {selectedFinding.service?.extraInfo ?? '—'}
                                         </p>
 
                                     </section>
