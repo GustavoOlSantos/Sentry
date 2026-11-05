@@ -31,14 +31,16 @@ public class FindingController {
     public ResponseEntity<?> updateFindingStatus(@PathVariable UUID findingId, @RequestBody UpdateFindingStatusRequest request) {
         FindingStatus newStatus = request.status();
         String justification = request.justification();
+        
 
         if (newStatus == null)  return ResponseEntity.badRequest().body("O campo 'status' é obrigatório.");
+        else if(newStatus == FindingStatus.VALIDATED) return ResponseEntity.badRequest().body("A alteração de status para 'Válido' é permitido apenas pela própria ferramenta.");
         if(findingId == null) return ResponseEntity.badRequest().body("O campo 'findingId' é obrigatório.");
         if(newStatus == FindingStatus.JUSTIFIED && (justification == null || justification.trim().isEmpty())) return ResponseEntity.badRequest().body("O campo 'justification' é obrigatório quando o status é JUSTIFIED.");
         
         UpdateFindingStatusResponse response = findingService.updateFindingStatus(findingId, newStatus, justification);
 
-        if (response.message() == "Finding não encontrado.") {
+        if (response.message().equals("Finding não encontrado.")) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 

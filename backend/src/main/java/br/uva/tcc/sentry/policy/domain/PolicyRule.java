@@ -32,7 +32,7 @@ public class PolicyRule {
     private PolicyRuleType type;
 
     @Column(name = "rule_condition")
-    private String condiditon;
+    private String condition;
 
     @Column(name = "expected_value")
     private String expectedValue;
