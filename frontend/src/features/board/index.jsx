@@ -214,6 +214,7 @@ export default function Board() {
     // ---------- Filtros ----------
     const [findingSearchTerm, setFindingSearchTerm] = useState('');
     const [findingAssigneeFilter, setFindingAssigneeFilter] = useState('');
+    const [findingStatusFilter, setFindingStatusFilter] = useState('');
 
     // ---------- Drag and drop / Drawer ----------
     const [draggedId, setDraggedId] = useState(null);
@@ -274,10 +275,12 @@ export default function Board() {
 
             const matchesAssignee = findingAssigneeFilter === '' || finding.assigneeId === findingAssigneeFilter;
 
-            return matchesSearch && matchesAssignee;
+            const matchesStatus = findingStatusFilter === '' || finding.status === findingStatusFilter;
+
+            return matchesSearch && matchesAssignee && matchesStatus;
         });
 
-    }, [findings, findingSearchTerm, findingAssigneeFilter]);
+    }, [findings, findingSearchTerm, findingAssigneeFilter, findingStatusFilter]);
 
     // ---------- Agrupamento por status ----------
     const groupedFindings = useMemo(() => {
@@ -519,15 +522,14 @@ export default function Board() {
                             </div>
 
                             <div className="filter-select">
-                                <select
-                                    id="status"
-                                    name="status"
-                                    value={''}
-                                    onChange={(e) => {}}
-                                >
-                                    <option value="todos">Status: Todos</option>
-                                    <option value="up">Online</option>
-                                    <option value="down">Offline</option>
+                                <select id="status" name="status" value={findingStatusFilter} onChange={(e) => setFindingStatusFilter(e.target.value)} >
+                                    <option value="">Status: Todos</option>
+
+                                    {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                                        <option key={value} value={value}>
+                                            {label}
+                                        </option>
+                                    ))}
                                 </select>
 
                                 <i className="fa-solid fa-chevron-down" aria-hidden="true"></i>

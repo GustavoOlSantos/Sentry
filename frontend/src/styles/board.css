@@ -68,6 +68,16 @@ main.findings-page {
     width: 225px;
     font-size: 11pt;
 
+    i {
+        position: absolute;
+        top: 50%;
+        right: 50px;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        font-size: 12px;
+        pointer-events: none;
+    }
+
     .filter__control {
         min-height: 46px;
         height: 46px;
