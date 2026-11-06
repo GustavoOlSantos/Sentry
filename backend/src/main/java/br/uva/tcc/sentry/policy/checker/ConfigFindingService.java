@@ -1,4 +1,4 @@
-package br.uva.tcc.sentry.finding.checker;
+package br.uva.tcc.sentry.policy.checker;
 
 import java.util.List;
 

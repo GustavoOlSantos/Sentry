@@ -15,7 +15,7 @@ import br.uva.tcc.sentry.scan.exception.TransientScanException;
 
 import br.uva.tcc.sentry.Asset.domain.Asset;
 import br.uva.tcc.sentry.Asset.service.AssetUpsertService;
-import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
+import br.uva.tcc.sentry.policy.checker.ConfigFindingService;
 import br.uva.tcc.sentry.finding.factory.FindingFactory;
 import br.uva.tcc.sentry.finding.service.FindingReconciler;
 import br.uva.tcc.sentry.vulnerability.domain.Vulnerability;
@@ -225,4 +225,4 @@ public class ScanConsumer {
 
     verificaGrupo(scan.getExecGroup());
 }
-}
+}
