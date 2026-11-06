@@ -1,13 +1,11 @@
 package br.uva.tcc.sentry.finding.controller;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import br.uva.tcc.sentry.finding.DTO.FindingBoardResponse;
 import br.uva.tcc.sentry.finding.DTO.UpdateFindingAssigneeRequest;
 import br.uva.tcc.sentry.finding.DTO.UpdateFindingStatusRequest;
-import br.uva.tcc.sentry.finding.DTO.UpdateFindingStatusResponse;
 import br.uva.tcc.sentry.finding.domain.FindingStatus;
 import br.uva.tcc.sentry.finding.service.FindingService;
 
@@ -31,31 +29,22 @@ public class FindingController {
     public ResponseEntity<?> updateFindingStatus(@PathVariable UUID findingId, @RequestBody UpdateFindingStatusRequest request) {
         FindingStatus newStatus = request.status();
         String justification = request.justification();
-        
 
-        if (newStatus == null)  return ResponseEntity.badRequest().body("O campo 'status' é obrigatório.");
-        else if(newStatus == FindingStatus.VALIDATED) return ResponseEntity.badRequest().body("A alteração de status para 'Válido' é permitido apenas pela própria ferramenta.");
-        if(findingId == null) return ResponseEntity.badRequest().body("O campo 'findingId' é obrigatório.");
-        if(newStatus == FindingStatus.JUSTIFIED && (justification == null || justification.trim().isEmpty())) return ResponseEntity.badRequest().body("O campo 'justification' é obrigatório quando o status é JUSTIFIED.");
-        
-        UpdateFindingStatusResponse response = findingService.updateFindingStatus(findingId, newStatus, justification);
+        if (newStatus == null) return ResponseEntity.badRequest().body("O campo 'status' é obrigatório.");
+        if (newStatus == FindingStatus.VALIDATED) return ResponseEntity.badRequest().body("A alteração de status para 'Válido' é permitido apenas pela própria ferramenta.");
+        if (newStatus == FindingStatus.FAILED_VALIDATION) return ResponseEntity.badRequest().body("A alteração de status para 'Inválido' é permitido apenas pela própria ferramenta.");
+        if (newStatus == FindingStatus.JUSTIFIED && (justification == null || justification.trim().isEmpty())) return ResponseEntity.badRequest().body("O campo 'justification' é obrigatório quando o status é JUSTIFIED.");
 
-        if (response.message().equals("Finding não encontrado.")) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        }
-
-        return ResponseEntity.ok(response);
+        // finding inexistente → 404, regra de transição violada → 409 (ver GlobalExceptionHandler)
+        return ResponseEntity.ok(findingService.updateFindingStatus(findingId, newStatus, justification));
     }
 
     @PatchMapping("/{findingId}/assignee")
-    public ResponseEntity<?> updateFindingStatus(@PathVariable UUID findingId, @RequestBody UpdateFindingAssigneeRequest request) {
+    public ResponseEntity<?> updateFindingAssignee(@PathVariable UUID findingId, @RequestBody UpdateFindingAssigneeRequest request) {
         var assigneeId = request.assigneeId();
 
-        if(findingId == null) return ResponseEntity.badRequest().body("O campo 'findingId' é obrigatório.");
         if(assigneeId == null) return ResponseEntity.badRequest().body("O campo 'assigneeId' é obrigatório.");
 
-        var response = findingService.updateFindingAssignee(findingId, assigneeId);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(findingService.updateFindingAssignee(findingId, assigneeId));
     }
 }

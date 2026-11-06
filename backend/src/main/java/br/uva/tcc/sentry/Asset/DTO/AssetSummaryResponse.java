@@ -14,6 +14,6 @@ public record AssetSummaryResponse(
     AssetStatus status,
     LocalDateTime firstSeenAt,
     LocalDateTime lastSeenAt,
-    Integer servicesCount,
+    Long servicesCount,
     Integer findingsCount
-) {}
+) {}

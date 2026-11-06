@@ -11,4 +11,6 @@ public interface ScanAssetRepository extends JpaRepository<ScanAsset, Long> {
     List<ScanAsset> findByScanId(UUID scanId);
 
     List<ScanAsset> findByAssetId(UUID assetId);
-}
+
+    boolean existsByScanIdAndAssetId(UUID scanId, UUID assetId);
+}

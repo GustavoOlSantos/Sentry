@@ -14,7 +14,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "asset", indexes = @Index(name = "idx_asset_ip_address", columnList = "ip_address"))
+@Table(name = "asset",
+       uniqueConstraints = @UniqueConstraint(name = "uk_asset_ip_address", columnNames = "ip_address"))
 @Getter
 @Setter
 public class Asset {
@@ -49,4 +50,27 @@ public class Asset {
 
     @OneToMany(mappedBy = "asset", fetch = FetchType.LAZY)
     private List<Finding> findings = new ArrayList<>();
+
+    /**
+     * Atualiza o asset com o que o scan mais recente observou. Não apaga com
+     * null o que já se sabia (hostname/MAC/SO nem sempre são detectados).
+     */
+    public void refreshFrom(Asset observed, LocalDateTime seenAt) {
+        if (observed.hostname != null) {
+            this.hostname = observed.hostname;
+        }
+        if (observed.macAddress != null) {
+            this.macAddress = observed.macAddress;
+        }
+        if (observed.operatingSystem != null) {
+            this.operatingSystem = observed.operatingSystem;
+        }
+        if (observed.status != null) {
+            this.status = observed.status;
+        }
+        if (this.firstSeenAt == null) {
+            this.firstSeenAt = seenAt;
+        }
+        this.lastSeenAt = seenAt;
+    }
 }

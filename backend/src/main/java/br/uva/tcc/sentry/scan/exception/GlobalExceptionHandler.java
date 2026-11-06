@@ -4,9 +4,13 @@ import java.time.Instant;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import br.uva.tcc.sentry.finding.exception.InvalidFindingTransitionException;
+import jakarta.persistence.EntityNotFoundException;
 
 /**
  * Converte exceções de validação de entrada e de execução do scan em
@@ -32,6 +36,23 @@ public class GlobalExceptionHandler {
         // falha que não vai se resolver sozinha tentando de novo (comando/alvo inválido,
         // nmap não instalado, XML malformado etc.)
         return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, "Falha na execução do scan", ex.getMessage());
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleEntityNotFound(EntityNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Recurso não encontrado", String.valueOf(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidFindingTransitionException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidFindingTransition(InvalidFindingTransitionException ex) {
+        return buildResponse(HttpStatus.CONFLICT, "Mudança de status não permitida", ex.getMessage());
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, Object>> handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
+        // o finding foi alterado (ex.: por um scan) entre a leitura e a gravação
+        return buildResponse(HttpStatus.CONFLICT, "Conflito de edição",
+                "O finding foi alterado por outro processo. Recarregue o board e tente novamente.");
     }
 
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String error, String message) {

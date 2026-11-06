@@ -16,6 +16,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface AssetRepository extends JpaRepository<Asset, UUID> {
 
+    Optional<Asset> findByIpAddress(String ipAddress);
+
     @EntityGraph(attributePaths = "services")
     @Query("SELECT DISTINCT a FROM Asset a")
     List<Asset> findAllWithServices();
@@ -42,7 +44,7 @@ public interface AssetRepository extends JpaRepository<Asset, UUID> {
             a.status,
             a.firstSeenAt,
             a.lastSeenAt,
-            SIZE(a.services),
+            (SELECT COUNT(s) FROM Service s WHERE s.asset = a AND s.state = 'open'),
             SIZE(a.findings)
         )
         FROM Asset a

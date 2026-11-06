@@ -37,7 +37,7 @@ const MANUAL_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'JUSTIFIED'];
 // TODO: trocar por GET /users quando o cadastro de usuários existir
 const MOCK_ASSIGNEES = [
     { id: 1, name: 'Gustavo Santos', img: dev_gustavo },
-    { id: 2, name: 'Leandro Lucas', img: dev_leandro },
+    { id: 2, name: 'Leandro Ribeiro', img: dev_leandro },
     { id: 3, name: 'Sophia Trotte', img: dev_sophia },
     { id: 4, name: 'Vivian Motta', img: dev_vivian }
 ];
@@ -518,6 +518,21 @@ export default function Board() {
                                 />
                             </div>
 
+                            <div className="filter-select">
+                                <select
+                                    id="status"
+                                    name="status"
+                                    value={''}
+                                    onChange={(e) => {}}
+                                >
+                                    <option value="todos">Status: Todos</option>
+                                    <option value="up">Online</option>
+                                    <option value="down">Offline</option>
+                                </select>
+
+                                <i className="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                            </div>
+
                             <Select
                                 className="filter-select"
                                 classNamePrefix="filter"
@@ -731,6 +746,12 @@ export default function Board() {
                                             {selectedFinding.description || 'Sem descrição.'}
                                         </p>
 
+                                        <br></br>
+
+                                        <p>
+                                            {selectedFinding.evidence || 'Sem descrição.'}
+                                        </p>
+
                                         <div className="drawer-dates">
                                             <h5>Criado em:</h5>
                                             <p>{formatDate(selectedFinding.detectedAt)}</p>
@@ -805,6 +826,11 @@ export default function Board() {
                                         <p>
                                             <strong>CPE:</strong>{' '}
                                             {selectedFinding.service?.cpe ?? '—'}
+                                        </p>
+
+                                        <p>
+                                            <strong>CVE:</strong>{' '}
+                                            {selectedFinding?.code ?? '—'}
                                         </p>
 
                                         <p>

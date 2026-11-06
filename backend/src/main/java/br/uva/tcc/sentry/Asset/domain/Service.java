@@ -10,7 +10,8 @@ import lombok.Setter;
  * Representa  um serviço encontrado em uma porta.
  */
 @Entity
-@Table(name = "service")
+@Table(name = "service",
+       uniqueConstraints = @UniqueConstraint(name = "uk_service_asset_port_protocol", columnNames = {"asset_id", "port", "protocol"}))
 @Getter
 @Setter
 public class Service {
@@ -73,6 +74,33 @@ public class Service {
 
     public boolean hasCpe() {
         return cpe != null && !cpe.isBlank();
+    }
+
+    public static final String STATE_OPEN = "open";
+    public static final String STATE_CLOSED = "closed";
+
+    public boolean isOpen() {
+        return STATE_OPEN.equals(state);
+    }
+
+    /** A porta deixou de responder. A linha é mantida porque findings antigos apontam para ela. */
+    public void markClosed() {
+        this.state = STATE_CLOSED;
+    }
+
+    /** Identidade do serviço dentro de um asset: porta + protocolo (ex.: "443/tcp"). */
+    public String key() {
+        return port + "/" + protocol;
+    }
+
+    /** Atualiza com o que o scan mais recente observou nesta mesma porta. */
+    public void updateFrom(Service observed) {
+        this.state = observed.state;
+        this.serviceName = observed.serviceName;
+        this.product = observed.product;
+        this.version = observed.version;
+        this.extraInfo = observed.extraInfo;
+        this.cpe = observed.cpe;
     }
 
     @Override

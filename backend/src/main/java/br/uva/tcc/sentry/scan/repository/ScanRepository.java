@@ -13,6 +13,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ScanRepository extends JpaRepository<Scan, UUID> {
+    boolean existsByTargetAndStatus(String target, ScanStatus status);
+
     @EntityGraph(attributePaths = {"execGroup", "warnings"})
     Optional<Scan> findWithExecGroupById(UUID id);
 
@@ -23,4 +25,4 @@ public interface ScanRepository extends JpaRepository<Scan, UUID> {
           AND s.status IN :statuses
         """)
         boolean existsScansByGroupIdAndStatusIn(@Param("groupId") UUID groupId, @Param("statuses") Collection<ScanStatus> statuses);
-}
+}

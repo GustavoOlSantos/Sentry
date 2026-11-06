@@ -3,6 +3,7 @@ package br.uva.tcc.sentry.scan.messaging;
 import br.uva.tcc.sentry.config.RabbitMQConfig;
 import br.uva.tcc.sentry.scan.domain.Scan;
 import br.uva.tcc.sentry.scan.domain.ScanAsset;
+import br.uva.tcc.sentry.scan.domain.ScanCoverage;
 import br.uva.tcc.sentry.scan.domain.ScanExecutionGroup;
 import br.uva.tcc.sentry.scan.domain.ScanResult;
 import br.uva.tcc.sentry.scan.domain.ScanStatus;
@@ -12,9 +13,11 @@ import br.uva.tcc.sentry.scan.scanner.ScanEngine;
 import br.uva.tcc.sentry.scan.exception.PermanentScanException;
 import br.uva.tcc.sentry.scan.exception.TransientScanException;
 
+import br.uva.tcc.sentry.Asset.domain.Asset;
+import br.uva.tcc.sentry.Asset.service.AssetUpsertService;
 import br.uva.tcc.sentry.finding.checker.ConfigFindingService;
 import br.uva.tcc.sentry.finding.factory.FindingFactory;
-import br.uva.tcc.sentry.finding.repository.FindingRepository;
+import br.uva.tcc.sentry.finding.service.FindingReconciler;
 import br.uva.tcc.sentry.vulnerability.domain.Vulnerability;
 import br.uva.tcc.sentry.vulnerability.repository.VulnerabilityRepository;
 import br.uva.tcc.sentry.vulnerability.nvd.VulnerabilityLookupService;
@@ -22,10 +25,8 @@ import lombok.RequiredArgsConstructor;
 import br.uva.tcc.sentry.scan.repository.ScanAssetRepository;
 import br.uva.tcc.sentry.scan.repository.ScanExecutionGroupRepository;
 import br.uva.tcc.sentry.scan.repository.ScanRepository;
-import br.uva.tcc.sentry.Asset.domain.Service;
-import br.uva.tcc.sentry.Asset.repository.AssetRepository;
-import br.uva.tcc.sentry.Asset.repository.ServiceRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -45,13 +47,12 @@ public class ScanConsumer {
     private final VulnerabilityLookupService vulnerabilityLookupService;
     private final ConfigFindingService configFindingService;
     private final FindingFactory findingFactory;
+    private final AssetUpsertService assetUpsertService;
+    private final FindingReconciler findingReconciler;
 
     private final ScanRepository scanRepository;
-    private final AssetRepository assetRepository;
-    private final ServiceRepository serviceRepository;
     private final ScanExecutionGroupRepository scanExecutionGroupRepository;
     private final ScanAssetRepository scanAssetRepository;
-    private final FindingRepository findingRepository;
     private final VulnerabilityRepository vulnerabilityRepository;
     
     
@@ -105,22 +106,27 @@ public class ScanConsumer {
             return;
         }
 
-        for (DiscoveredHost host : result.getHosts()) {
-            assetRepository.save(host.asset());
+        // 1. identidade estável: reaproveita assets/serviços que já existem em vez de duplicá-los a cada scan
+        ScanCoverage coverage = new ScanCoverage();
+        List<DiscoveredHost> hosts = new ArrayList<>();
 
-            var scanAsset = new ScanAsset(scan, host.asset(), host.asset().getFirstSeenAt());
-            scanAssetRepository.save(scanAsset);
+        for (DiscoveredHost discovered : result.getHosts()) {
+            DiscoveredHost host = assetUpsertService.upsert(discovered);
+            hosts.add(host);
 
-            for(Service service : host.services()){
-                serviceRepository.save(service);
-            }
+            coverage.markHostScanned(host);
+            registrarScanAsset(scan, host.asset());
         }
+        result.setHosts(hosts);
 
-        for (DiscoveredHost host : result.getHosts()) {
+        // 2. candidatos a finding: o que este scan observou
+        for (DiscoveredHost host : hosts) {
             result.addFindings(configFindingService.check(host, scan));
 
             for (var service : host.services()) {
                 if (!service.hasCpe() || service.getVersion() == null) {
+                    // sem CPE/versão não dá para consultar o NVD: ausência de CVE aqui não prova nada
+                    coverage.markServiceUnverified(host.asset(), service);
                     continue;
                 }
 
@@ -129,6 +135,7 @@ public class ScanConsumer {
                 if (!lookupResult.successful()) {
                     scan.addWarning(lookupResult.errorMessage());
                     scanRepository.save(scan);
+                    coverage.markServiceUnverified(host.asset(), service);
                     continue;
                 }
 
@@ -139,14 +146,36 @@ public class ScanConsumer {
             }
         }
 
-        findingRepository.saveAll(result.getFindings());
-        log.info("{} finding(s) salvo(s) para o scan {}", result.getFindings().size(), scan.getId());
+        // 3. reconciliação: cria o que é novo, atualiza o que já existia e valida o que sumiu
+        var reconciliation = reconciliarFindings(scan, result, coverage);
+        log.info("Findings do scan {} reconciliados: {}", scan.getId(), reconciliation);
 
         scan.markFinished();
         scanRepository.save(scan);
         log.info("Scan finalizado com sucesso. ID: {}, Host: {}", scanRequestReceived.scanId(), scanRequestReceived.target());
 
         verificaGrupo(scanGroup);
+    }
+
+    /**
+     * Conflitos de concorrência (outro scan do mesmo host reconciliando ao mesmo
+     * tempo, ou o usuário mexendo no mesmo finding pelo Board) são passageiros:
+     * viram {@link TransientScanException} para o scan ser tentado de novo, já
+     * que a reconciliação é idempotente.
+     */
+    private FindingReconciler.Result reconciliarFindings(Scan scan, ScanResult result, ScanCoverage coverage) {
+        try {
+            return findingReconciler.reconcile(scan, result.getFindings(), coverage);
+        } catch (ObjectOptimisticLockingFailureException | DataIntegrityViolationException e) {
+            throw new TransientScanException("Conflito de concorrência ao reconciliar os findings do scan " + scan.getId(), e);
+        }
+    }
+
+    /** Idempotente: numa nova tentativa do mesmo scan, a associação scan/asset já pode existir. */
+    private void registrarScanAsset(Scan scan, Asset asset) {
+        if (!scanAssetRepository.existsByScanIdAndAssetId(scan.getId(), asset.getId())) {
+            scanAssetRepository.save(new ScanAsset(scan, asset, asset.getLastSeenAt()));
+        }
     }
 
     /**
@@ -196,4 +225,4 @@ public class ScanConsumer {
 
     verificaGrupo(scan.getExecGroup());
 }
-}
+}

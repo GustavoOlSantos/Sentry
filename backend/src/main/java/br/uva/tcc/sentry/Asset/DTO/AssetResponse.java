@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import br.uva.tcc.sentry.Asset.domain.Asset;
 import br.uva.tcc.sentry.Asset.domain.AssetStatus;
+import br.uva.tcc.sentry.Asset.domain.Service;
 import br.uva.tcc.sentry.finding.DTO.FindingResponse;
 
 public record AssetResponse(
@@ -32,6 +33,7 @@ public record AssetResponse(
             asset.getLastSeenAt(),
             asset.getServices()
                 .stream()
+                .filter(Service::isOpen) // portas que fecharam ficam no banco (findings apontam para elas), mas não são exibidas
                 .map(ServiceResponse::from)
                 .toList(),
             asset.getFindings()
@@ -40,4 +42,4 @@ public record AssetResponse(
                 .toList()
         );
     }
-}
+}
