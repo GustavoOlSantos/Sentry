@@ -1,13 +1,15 @@
 package br.uva.tcc.sentry.scan.controller;
 
+import br.uva.tcc.sentry.Asset.domain.Asset;
 import br.uva.tcc.sentry.scan.DTO.ScanRequest;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
 import br.uva.tcc.sentry.scan.domain.Scan;
 import br.uva.tcc.sentry.scan.domain.ScanStatus;
 import br.uva.tcc.sentry.scan.services.ScanService;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -27,13 +29,23 @@ public class ScanController{
     }
 
     @GetMapping()
-    public ArrayList<Scan> getAllScans(){
+    public List<Scan> getAllScans(){
        return scanService.findAll();
     }
 
     @GetMapping("/id/{id}")
-    public Scan getSingleScanByID(@PathVariable UUID id){
+    public Optional<Scan> getSingleScanByID(@PathVariable UUID id){
         return scanService.findById(id);
+    }
+
+    @DeleteMapping("/id/{id}")
+    public void deleteById(UUID id){
+        scanService.deleteById(id);
+    }
+
+    @PutMapping("/{id}")
+    public Scan editById(Scan scan){
+        return scanService.editScan(scan);
     }
 
     @PostMapping("/exec")

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -52,14 +53,21 @@ public class ScanService {
         this.scanExecutionGroupRepository = scanExecutionGroupRepository;
     }
 
-    public ArrayList<Scan> findAll() {
-        return new ArrayList<>();
+    public List<Scan> findAll() {
+        return scanRepository.findAll();
     }
 
-    public Scan findById(UUID id) {
-        return new Scan();
+    public Optional<Scan> findById(UUID id) {
+        return scanRepository.findById(id);
     }
 
+    public void deleteById(UUID id){
+        scanRepository.deleteById(id);
+    }
+
+    public Scan editScan(Scan scan){
+        return scanRepository.save(scan);
+    }
    
     public ScanResponse executeScan(String strTargets) {
         var targets = targetsToList(strTargets);
