@@ -1,0 +1,160 @@
+/* ---------- avatar e badge de perfil (header, tabela de usuários, perfil) ---------- */
+.user-avatar {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: inline-grid;
+    place-items: center;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    user-select: none;
+
+    &.user-avatar--large {
+        width: 64px;
+        height: 64px;
+        font-size: 22px;
+    }
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    &.role-badge--adm {
+        color: var(--brand-secondary-light);
+        background-color: rgba(139, 92, 246, 0.16);
+    }
+
+    &.role-badge--dev {
+        color: var(--brand-light);
+        background-color: var(--surface-info);
+    }
+
+    &.role-badge--user {
+        color: var(--text-secondary);
+        background-color: var(--bg-surface-hover);
+    }
+}
+
+/* ---------- menu do usuário no header ---------- */
+.user-menu {
+    position: relative;
+    margin-right: 10px;
+}
+
+.user-menu__trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 10px 4px 4px;
+    color: var(--text-primary);
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+
+    &:hover,
+    &[aria-expanded="true"] {
+        background-color: var(--bg-surface);
+        border-color: var(--border-default);
+    }
+}
+
+.user-menu__name {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    @media (max-width: 640px) {
+        display: none;
+    }
+}
+
+.user-menu__chevron {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.user-menu__dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+    min-width: 260px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+
+    a,
+    button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 12px;
+        color: var(--text-secondary);
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 14px;
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+
+        &:hover {
+            color: var(--text-primary);
+            background-color: var(--bg-surface-hover);
+        }
+    }
+
+    i {
+        width: 16px;
+        color: var(--text-muted);
+    }
+
+    .user-menu__logout:hover {
+        color: var(--severity-critical);
+
+        i {
+            color: var(--severity-critical);
+        }
+    }
+}
+
+.user-menu__identity {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 6px;
+    padding: 8px 12px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+
+    strong {
+        color: var(--text-primary);
+        font-size: 14px;
+    }
+
+    span:not(.role-badge) {
+        color: var(--text-muted);
+        font-size: 12.5px;
+        word-break: break-all;
+    }
+}

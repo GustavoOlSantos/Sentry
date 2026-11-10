@@ -1,26 +1,10 @@
-import Home from "../../features/home";
 import NotFound from "../../features/not-found/";
-
-import NovoScan from "../../features/scan/novo-scan";
-import Hosts from "../../features/hosts";
-import Board from "../../features/board";
+import Login from "../../features/auth/login";
 
 export const publicRoutes = [
   {
-    path: "/",
-    element: <Home />
-  },
-  {
-    path: "/novo-scan",
-    element: <NovoScan />
-  },
-  {
-    path: "/hosts",
-    element: <Hosts />
-  },
-   {
-    path: "/board",
-    element: <Board />
+    path: "/login",
+    element: <Login />
   },
   {
     path: "*",

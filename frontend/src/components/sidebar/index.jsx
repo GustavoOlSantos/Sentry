@@ -3,9 +3,12 @@ import { NavLink, useLocation } from "react-router-dom";
 
 import "../../styles/home.css";
 
+import { useAuth } from "../../features/auth/useAuth";
+
 export function SideBar() {
     const location = useLocation();
     const isDashboard = location.pathname === "/";
+    const { can } = useAuth();
 
     const [collapsed, setCollapsed] = useState(() => {
         return localStorage.getItem("sidebar-collapsed") === "true";
@@ -121,7 +124,23 @@ export function SideBar() {
                         </span>
                     </NavLink>
                 </li>
+
+                {can("manageUsers") && (
+                    <li>
+                        <NavLink to="/usuarios">
+                            <i className="fas fa-users"></i>
+
+                            <span className="sidebar-text">
+                                Usuários
+                                <p>
+                                    Contas, perfis de acesso
+                                    e permissões.
+                                </p>
+                            </span>
+                        </NavLink>
+                    </li>
+                )}
             </ul>
         </aside>
     );
-}
+}
