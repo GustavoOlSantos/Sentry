@@ -49,7 +49,28 @@ nvd:
   # sem chave funciona, mas o rate limit do NVD cai de 50 para 5 req/30s
   api-key: ${NVD_API_KEY:}
 
+sentry:
+  security:
+    jwt:
+      # chave de assinatura HS256 (minimo 32 caracteres). Gere com: openssl rand -base64 48
+      # NAO versione o valor: defina a variavel de ambiente SENTRY_JWT_SECRET.
+      secret: ${SENTRY_JWT_SECRET:prescribe-awaken-exorcism-smirk-unwrapped-voicing-those-postage}
+      expiration: ${SENTRY_JWT_EXPIRATION:PT2H}
+      issuer: sentry
+    cors:
+      # origens permitidas a chamar a API pelo navegador (separadas por virgula)
+      allowed-origins: ${SENTRY_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    # Swagger/OpenAPI sem login. Em producao use SENTRY_PUBLIC_DOCS=false.
+    public-docs: ${SENTRY_PUBLIC_DOCS:true}
+    # administrador criado na primeira inicializacao, se ainda nao existir nenhum usuario
+    bootstrap-admin:
+      name: ${SENTRY_ADMIN_NAME:Administrador}
+      email: ${SENTRY_ADMIN_EMAIL:admin@sentry.com}
+      password: ${SENTRY_ADMIN_PASSWORD:12345678}
+
 management:
   endpoint:
     health:
-      show-details: always
+      # anonimo ve so o status; detalhes (banco, rabbit) apenas para ADM
+      show-details: when-authorized
+      roles: ADM
