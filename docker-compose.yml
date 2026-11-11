@@ -1,18 +1,113 @@
-services:
-  metasploitable2:
-    image: tleemcjr/metasploitable2:latest
-    container_name: sentry-target-metasploitable2
-    hostname: victim
-    command: sh -c "/bin/services.sh && tail -f /dev/null"
-    networks:
-      - sentry-lab
-    ports:
-      - "21:21"   # vsftpd 2.3.4 (backdoor CVE-2011-2523)
-      - "22:22"   # OpenSSH antigo
-      - "80:80"   # Apache antigo / DVWA
-      - "3306:3306" # MySQL antigo
-      - "1445:445"   # Samba
+name: sentry
 
-networks:
-  sentry-lab:
-    driver: bridge
+services:
+  # docker run --name sentry_db -e MYSQL_ROOT_PASSWORD=123456 -e MYSQL_DATABASE=sentry_db -p 3306:3306 -d mysql:9.7
+  mysql:
+    image: mysql:9.7
+    container_name: sentry_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sentry_db}
+    ports:
+      - "${MYSQL_HOST_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # docker run -d --name sentry-rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: sentry-rabbitmq
+    hostname: sentry-rabbitmq # o nome do nó guarda os dados no volume: precisa ser fixo
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - "5672:5672"     # aplicação (AMQP)
+      - "15672:15672"   # painel de administração: http://localhost:15672
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 30s
+  
+  # imagem construída a partir de frontend/Dockerfile
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: sentry-frontend:latest
+    container_name: sentry-frontend
+    restart: on-failure:5
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    command: npm run dev -- --host 0.0.0.0
+    
+  # imagem construída a partir de backend/Dockerfile
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: sentry-backend:latest
+    container_name: sentry-backend
+    restart: on-failure:5
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    # o Nmap usa sockets "raw" (-sV / -O); sem isso a detecção de SO falha dentro do container
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      # banco (dentro da rede do compose o host é o nome do serviço, não localhost)
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-sentry_db}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+
+      # mensageria
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+
+      # segurança (obrigatório: SENTRY_JWT_SECRET com 32+ caracteres)
+      SENTRY_JWT_SECRET: ${SENTRY_JWT_SECRET:-}
+      SENTRY_JWT_EXPIRATION: ${SENTRY_JWT_EXPIRATION:-PT2H}
+      SENTRY_CORS_ALLOWED_ORIGINS: ${SENTRY_CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      SENTRY_PUBLIC_DOCS: ${SENTRY_PUBLIC_DOCS:-true}
+      SENTRY_ADMIN_NAME: ${SENTRY_ADMIN_NAME:-Administrador}
+      SENTRY_ADMIN_EMAIL: ${SENTRY_ADMIN_EMAIL:-}
+      SENTRY_ADMIN_PASSWORD: ${SENTRY_ADMIN_PASSWORD:-}
+
+      # scanner
+      NVD_API_KEY: ${NVD_API_KEY:-}
+      NMAP_TIMEOUT_SECONDS: ${NMAP_TIMEOUT_SECONDS:-120}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 90s
+
+volumes:
+  mysql_data:
+  rabbitmq_data:
