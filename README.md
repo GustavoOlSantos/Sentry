@@ -1,238 +1,939 @@
+# Sentry
 
-# SENTRY
-Plataforma de varredura de ativos, identificação de vulnerabilidades e verificações de segurança
+Plataforma para **descoberta de ativos, identificação de vulnerabilidades e avaliação de configurações de segurança** em ambientes de rede controlados e autorizados.
 
 <div align="center">
-  <img src="https://skillicons.dev/icons?i=react,java,spring,rabbitmq,javascript,html,css,mysql" />
-  <img height="40px" src="https://upload.wikimedia.org/wikipedia/commons/7/73/Logo_nmap.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original" />
+
+<img src="https://skillicons.dev/icons?i=java,spring,react,javascript,rabbitmq,mysql,docker" />
+
 </div>
 
 ---
 
-## 1. SOBRE O PROJETO
+## Sobre o projeto
 
-O Sentry é um projeto acadêmico em desenvolvimento, como TCC, criado com o objetivo de apoiar a identificação e a organização de riscos de segurança
-em ambientes de rede controlados e autorizados.
+O **Sentry** é um projeto acadêmico desenvolvido como Trabalho de Conclusão de Curso (TCC), com foco em **desenvolvimento e segurança da informação**.
 
-A proposta é reunir, em uma única plataforma, o processo de descoberta de hosts, serviços, correlação de versões identificadas com vulnerabilidades conhecidas,
-violações de políticas e configurações internas e a gestão de todos os achados em formato de cards estilo Kanban, para acompanhar e monitorar a resolução 
-dos problemas encontrados.
+A plataforma tem como objetivo centralizar o processo de descoberta e análise de ativos de rede, permitindo:
 
-Para o Scanner, é utilizado o Nmap para a descoberta técnica. O valor do Sentry está na orquestração do fluxo, no
-tratamento dos resultados, na consulta ao catálogo de vulnerabilidades e na
-organização dos achados.
+- realizar varreduras de um ou mais alvos;
+- descobrir hosts, portas e serviços;
+- identificar versões e informações CPE;
+- correlacionar CPEs com vulnerabilidades conhecidas;
+- avaliar configurações de segurança;
+- aplicar regras e políticas de segurança;
+- organizar vulnerabilidades e violações em **Findings**;
+- acompanhar o ciclo de vida dos achados;
+- atribuir responsáveis pela resolução;
+- consultar o histórico das varreduras e dos ativos encontrados.
 
->[!Warning]
-> o projeto está em desenvolvimento.
+O **Nmap** é utilizado como mecanismo de descoberta e coleta técnica. A consulta ao **NVD (National Vulnerability Database)** permite correlacionar os componentes identificados com vulnerabilidades conhecidas.
 
-## 2. OBJETIVOS
+O processamento das varreduras é realizado de forma **assíncrona através do RabbitMQ**, permitindo que múltiplos alvos sejam processados independentemente.
+
+> [!WARNING]
+> O Sentry é um projeto acadêmico e deve ser utilizado exclusivamente em máquinas, redes e serviços para os quais exista autorização explícita para realização de testes.
+
+---
+
+## Objetivos
+
+### Objetivo geral
+
+Desenvolver uma plataforma capaz de auxiliar na identificação, organização e acompanhamento de riscos de segurança encontrados em ativos de rede.
+
+### Objetivos específicos
 
 - Executar varreduras de um ou mais alvos autorizados.
-- Processar cada alvo de forma assíncrona utilizando RabbitMQ.
-- Identificar hosts, portas abertas, serviços, versões e informações CPE
-  fornecidas pelo Nmap.
-- Consultar o National Vulnerability Database (NVD) para buscar CVEs associadas
-  aos CPEs identificados.
-- Executar verificações preliminares de configuração insegura.
-- Normalizar vulnerabilidades e violações de configuração em objetos Finding.
-- Evoluir para o acompanhamento de solicitações agrupadas, histórico de scans,
-  ativos e resultados persistidos.
-- Futuramente, disponibilizar uma interface para visualizar os resultados e
-  apoiar a gestão de vulnerabilidades e políticas de segurança.
+- Processar os alvos de forma assíncrona utilizando RabbitMQ.
+- Identificar hosts, portas, serviços e versões.
+- Extrair informações CPE fornecidas pelo Nmap.
+- Consultar o NVD para identificar vulnerabilidades relacionadas aos CPEs.
+- Detectar configurações potencialmente inseguras.
+- Aplicar regras de políticas de segurança.
+- Normalizar vulnerabilidades e violações em objetos `Finding`.
+- Persistir ativos, serviços, varreduras, vulnerabilidades e findings.
+- Controlar o ciclo de vida dos findings.
+- Permitir atribuição de responsáveis aos achados.
+- Disponibilizar autenticação e controle de acesso.
+- Disponibilizar uma interface web para visualização e gerenciamento dos resultados.
 
-## 3. TECNOLOGIAS
-**Backend**
-- Java 21
-- Spring Boot 4.1
-- Spring Web MVC / REST
-- Spring AMQP e RabbitMQ
-- Spring RestClient para integração HTTP com o NVD
+---
+
+## Funcionalidades
+
+### 🔎 Varredura e descoberta
+
+- Varredura de múltiplos alvos.
+- Validação dos alvos informados.
+- Execução do Nmap como processo externo.
+- Timeout para evitar processos de varredura indefinidamente executando.
+- Parsing do XML produzido pelo Nmap.
+- Identificação de:
+  - hosts;
+  - portas;
+  - estados das portas;
+  - serviços;
+  - versões;
+  - sistema operacional;
+  - CPEs.
+
+### 🐇 Processamento assíncrono
+
+As solicitações de varredura são processadas através do RabbitMQ.
+
+O sistema utiliza:
+
+- publicação assíncrona;
+- confirmação de publicação;
+- tratamento de mensagens não confirmadas;
+- retry para falhas transitórias;
+- distinção entre falhas transitórias e permanentes;
+- tratamento de falhas de processamento;
+- agrupamento de execuções através de `ScanExecutionGroup`.
+
+Cada alvo pode ser processado independentemente, permitindo que uma solicitação contendo múltiplos alvos seja distribuída para processamento.
+
+### 🛡️ Vulnerabilidades
+
+- Consulta ao NVD API 2.0.
+- Busca de vulnerabilidades através de CPE.
+- Mapeamento das respostas do NVD para o domínio da aplicação.
+- Persistência das vulnerabilidades identificadas.
+- Associação das vulnerabilidades aos ativos e serviços encontrados.
+
+### 📋 Políticas de segurança
+
+O sistema possui uma estrutura para definição e avaliação de políticas e regras de segurança.
+
+Entre as verificações implementadas estão:
+
+- certificados expirados;
+- portas de bancos de dados expostas;
+- SSH exposto;
+- regras baseadas em portas e serviços.
+
+A arquitetura permite a inclusão de novas verificações através do modelo de `ConfigCheck` e da avaliação de `PolicyRule`.
+
+### 🚨 Findings
+
+Vulnerabilidades e violações de políticas são normalizadas em um modelo único de `Finding`.
+
+Cada finding pode conter informações como:
+
+- ativo relacionado;
+- serviço;
+- vulnerabilidade;
+- regra de política;
+- tipo;
+- severidade;
+- status;
+- título;
+- descrição;
+- evidências;
+- data de detecção;
+- responsável.
+
+O sistema também possui mecanismo de **reconciliação de findings**, permitindo evitar a criação indiscriminada de registros duplicados entre diferentes execuções.
+
+### 👤 Autenticação e usuários
+
+O sistema possui autenticação baseada em **JWT** e controle de acesso através do Spring Security.
+
+Inclui:
+
+- login;
+- emissão de JWT;
+- controle de roles;
+- gerenciamento de usuários;
+- criação e remoção de usuários;
+- atualização de dados;
+- alteração de senha;
+- políticas de senha;
+- administrador inicial configurável.
+
+### 🖥️ Interface web
+
+O frontend é desenvolvido em React e possui estrutura para:
+
+- autenticação;
+- dashboard;
+- visualização de ativos;
+- execução de scans;
+- visualização de findings;
+- gerenciamento de usuários;
+- gerenciamento de políticas;
+- navegação protegida;
+- tratamento de páginas não encontradas e acesso não autorizado.
+
+---
+
+## Arquitetura
+
+O fluxo principal do sistema pode ser representado da seguinte forma:
+
+```text
+┌──────────────────────┐
+│      React / Web     │
+└──────────┬───────────┘
+           │ HTTP / REST
+           ▼
+┌──────────────────────┐
+│   Spring Boot API    │
+│                      │
+│ Auth / Scan / Asset  │
+│ Finding / Policy     │
+└──────────┬───────────┘
+           │
+           ├───────────────────────┐
+           │                       │
+           ▼                       ▼
+┌──────────────────┐     ┌──────────────────┐
+│     MySQL        │     │    RabbitMQ      │
+│                  │     │                  │
+│ Scans            │     │ Scan messages    │
+│ Assets           │     │ Retry / Queue    │
+│ Services         │     └────────┬─────────┘
+│ Findings         │              │
+│ Vulnerabilities  │              ▼
+│ Policies         │     ┌──────────────────┐
+│ Users            │     │  Scan Consumer   │
+└──────────────────┘     └────────┬─────────┘
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │      Nmap        │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │ Nmap XML Parser  │
+                         └────────┬─────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    ▼                           ▼
+             ┌──────────────┐          ┌────────────────┐
+             │   Policies   │          │      NVD       │
+             │  Evaluation  │          │  Vulnerability │
+             └──────┬───────┘          │    Lookup      │
+                    │                  └───────┬────────┘
+                    └──────────┬───────────────┘
+                               ▼
+                       ┌────────────────┐
+                       │    Findings    │
+                       └────────────────┘
+```
+
+### Fluxo de uma varredura
+
+```text
+POST /scan/exec
+       │
+       ▼
+ScanService
+       │
+       ├── valida os alvos
+       ├── remove duplicidades
+       ├── cria ScanExecutionGroup
+       ├── cria os Scans
+       └── publica mensagens
+                │
+                ▼
+             RabbitMQ
+                │
+                ▼
+          ScanConsumer
+                │
+                ▼
+          NmapScanEngine
+                │
+        ┌───────┴────────┐
+        ▼                ▼
+   Nmap Parser       Nmap timeout
+        │
+        ▼
+   Assets / Services
+        │
+        ├───────────────┐
+        ▼               ▼
+ Policy Evaluation    NVD Lookup
+        │               │
+        └───────┬───────┘
+                ▼
+             Findings
+                │
+                ▼
+       Finding Reconciliation
+                │
+                ▼
+            MySQL
+```
+
+A API não precisa aguardar o término da varredura para responder à solicitação. O processamento acontece de maneira assíncrona e os resultados podem ser consultados posteriormente.
+
+---
+
+## Persistência
+
+O sistema utiliza **MySQL** com **Spring Data JPA / Hibernate**.
+
+Entre as principais entidades persistidas estão:
+
+```text
+User
+  │
+  └── autenticação / autorização
+
+ScanExecutionGroup
+  │
+  └── Scan
+       │
+       └── ScanAsset
+             │
+             └── Asset
+                  │
+                  └── Service
+
+Asset
+  │
+  └── Finding
+        ├── Vulnerability
+        └── PolicyRule
+```
+
+A associação `ScanAsset` representa a relação entre uma execução de scan e um ativo descoberto, permitindo manter informações específicas daquela descoberta.
+
+---
+
+## Tecnologias
+
+### Backend
+
+- **Java 21**
+- **Spring Boot 4.1.1**
+- Spring Web MVC
+- Spring Security
+- Spring Data JPA
+- Hibernate
+- Spring AMQP
+- Spring RestClient
 - Spring Cache
-- Springdoc OpenAPI / Swagger UI
-- Maven Wrapper
+- Spring Validation
+- Spring Actuator
+- Springdoc OpenAPI
 - Lombok
+- Maven Wrapper
 
-**Frontend**
-- React 19.2
-- Vite 8.3
+### Frontend
 
-**Ferramentas e integrações**
-- Nmap: descoberta de hosts, portas, serviços, versões e sistema operacional.
-- NVD API 2.0: consulta de vulnerabilidades conhecidas por CPE.
-- RabbitMQ: fila de processamento assíncrono.
-- Docker: alternativa prática para executar o RabbitMQ localmente e posteriormente o compose da aplicação e máquinas vulneráveis de exemplo
+- **React 19**
+- **Vite 8**
+- React Router
+- Axios
+- React Select
+- JavaScript
 
+### Banco de dados
 
-## 4. COMO O SISTEMA FUNCIONA
+- **MySQL 9.7**
 
-Fluxo geral atual:
-```
-  Cliente HTTP
-      |
-      v
-  POST /scan/exec
-      |
-      v
-  ScanService
-      |
-      +--> separa e remove alvos repetidos
-      +--> cria um identificador para cada execução
-      +--> publica uma mensagem por alvo no RabbitMQ
-                   |
-                   v
-              RabbitMQ
-                   |
-                   v
-              ScanConsumer
-                   |
-                   v
-              NmapScanEngine
-                   |
-                   +--> NmapCommandBuilder
-                   +--> NmapProcessExecutor
-                   +--> NmapResultParser
-                   |
-                   v
-              Hosts e serviços descobertos
-                   |
-                   +--> Verificações de configuração
-                   +--> Consulta ao NVD por CPE
-                   +--> Criação de Findings
-```
-A execução é assíncrona: a API solicita o processamento e retorna sem esperar
-que todas as varreduras terminem. O estado e os resultados produzidos pelo
-consumidor ainda não são armazenados de forma persistente.
+### Mensageria
 
-O projeto também está evoluindo para agrupar várias execuções em uma entidade
-ScanExecutionGroup. A associação entre grupo, scans individuais e o cálculo do
-estado final do grupo devem ser concluídos junto com o fluxo de persistência.
+- **RabbitMQ**
 
-## 6. ESTRUTURA DO REPOSITÓRIO
-```
+### Segurança
+
+- Spring Security
+- JWT
+- OAuth2 Resource Server / Nimbus
+
+### Ferramentas e integrações
+
+- **Nmap**
+- **NVD API 2.0**
+- Docker
+- Docker Compose
+
+---
+
+## Estrutura do projeto
+
+```text
 sentry/
+│
 ├── backend/
-│    ├── src/main/java/br/uva/tcc/sentry/
-│    │   ├── config/                 Configurações do Spring e do RabbitMQ
-│    │   ├── Asset/domain/           Modelos de ativos e serviços
-│    │   ├── scan/
-│    │   │   ├── controller/           Endpoints REST de scan
-│    │   │   ├── DTO/                  Objetos de requisição e resposta
-│    │   │   ├── domain/               Scan, ScanResult e modelos relacionados
-│    │   │   ├── messaging/             Produtor e consumidor RabbitMQ
-│    │   │   ├── scanner/               Contrato do mecanismo de varredura
-│    │   │   │   └── nmap/          Construção, execução e parsing do Nmap
-│    │   │   └── services/              Orquestração das solicitações
-│    │   ├── vulnerability/
-│    │   │   ├── domain/                Modelo de vulnerabilidade
-│    │   │   └── nvd/                   Cliente, mapeador e configuração do NVD
-│    │   ├── finding/
-│    │   │   ├── checker/               Verificações de configuração
-│    │   │   ├── domain/                Modelo de Finding e enums
-│    │   │   └── factory/               Criação centralizada de Findings
-│    │   ├── policy/domain/            Modelos iniciais de política e regras
-│    │   ├── shared/domain/            Tipos compartilhados, como Severity
-│    ├── src/main/resources/
-│    │   ├──  application.yaml         Configurações da aplicação
-│    │   ├── logback-spring.xml       Configuração de logs
-│    ├── pom.xml                    Dependências e configuração Maven
-│    ├── mvnw / mvnw.cmd            Maven Wrapper
-├── frontend/                    Estrutura reservada para a interface
-├── README.txt                  
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/br/uva/tcc/sentry/
+│   │   │   │
+│   │   │   ├── Asset/
+│   │   │   │   ├── controller/
+│   │   │   │   ├── DTO/
+│   │   │   │   ├── domain/
+│   │   │   │   ├── repository/
+│   │   │   │   └── service/
+│   │   │   │
+│   │   │   ├── auth/
+│   │   │   │   ├── config/
+│   │   │   │   ├── controller/
+│   │   │   │   ├── DTO/
+│   │   │   │   ├── domain/
+│   │   │   │   ├── exception/
+│   │   │   │   ├── repository/
+│   │   │   │   ├── security/
+│   │   │   │   └── service/
+│   │   │   │
+│   │   │   ├── config/
+│   │   │   │
+│   │   │   ├── finding/
+│   │   │   │   ├── controller/
+│   │   │   │   ├── DTO/
+│   │   │   │   ├── domain/
+│   │   │   │   ├── exception/
+│   │   │   │   ├── factory/
+│   │   │   │   ├── repository/
+│   │   │   │   └── service/
+│   │   │   │
+│   │   │   ├── policy/
+│   │   │   │   ├── checker/
+│   │   │   │   ├── controller/
+│   │   │   │   ├── domain/
+│   │   │   │   ├── repository/
+│   │   │   │   └── service/
+│   │   │   │
+│   │   │   ├── scan/
+│   │   │   │   ├── controller/
+│   │   │   │   ├── DTO/
+│   │   │   │   ├── domain/
+│   │   │   │   ├── exception/
+│   │   │   │   ├── messaging/
+│   │   │   │   ├── repository/
+│   │   │   │   ├── scanner/
+│   │   │   │   ├── services/
+│   │   │   │   └── validation/
+│   │   │   │
+│   │   │   ├── shared/
+│   │   │   │
+│   │   │   └── vulnerability/
+│   │   │       ├── domain/
+│   │   │       ├── nvd/
+│   │   │       └── repository/
+│   │   │
+│   │   └── resources/
+│   │       ├── application.yaml
+│   │       └── logback-spring.xml
+│   │
+│   ├── src/test/
+│   ├── Dockerfile
+│   ├── pom.xml
+│   ├── mvnw
+│   └── mvnw.cmd
+│
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── app/
+│   │   │   └── routes/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   └── ...
+│   ├── package.json
+│   └── vite.config.js
+│
+├── lab-hosts/
+│   └── lab-docker-compose.yml
+│
+├── README.md
+└── dev-README.md
 ```
 
-## 7. REQUISITOS PARA EXECUÇÃO LOCAL
-- Java Development Kit (JDK) 21 e disponível na PATH do sistema.
-- Nmap instalado e disponível no PATH do sistema.
-- Node/npm instalado na máquina.
-- RabbitMQ acessível pelo backend.
-- Docker, caso deseje executar o RabbitMQ em um contêiner.
-- No terminal, definir a variável de ambiente NVD_API_KEY (Valor na secret)
-- Acesso à internet para consultar a API do NVD.
-- Maven Wrapper incluído no repositório; uma instalação global do Maven não é
-  necessária, desde que o Wrapper consiga baixar sua distribuição na primeira
-  execução.
+---
 
+## Requisitos
 
-A execução de scans deve ser feita somente contra máquinas, redes e serviços
-para os quais você possui autorização explícita.
+Para executar o projeto localmente, é necessário possuir:
 
-### 8. CONFIGURAÇÃO DO AMBIENTE
+- JDK 21;
+- Node.js e npm;
+- Docker;
+- Nmap instalado e disponível no `PATH`;
+- acesso à internet;
+- MySQL;
+- RabbitMQ.
 
-#### 8.1. Iniciar RabbitMQ com Docker
-Execute:
+O Maven não precisa estar instalado globalmente, pois o projeto possui **Maven Wrapper**.
 
-```
-docker run -d --name sentry-rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
-```
+---
 
-A aplicação conecta por padrão em `localhost:5672`
-Painel administrativo: `http://localhost:15672/`
+## Configuração
 
-Credenciais padrão para desenvolvimento local:
-Usuário: `guest`
-Senha: `guest`
+### Variáveis de ambiente
 
-#### 8.2. Variáveis de ambiente
+As principais configurações podem ser sobrescritas através de variáveis de ambiente.
 
-A variável NVD_API_KEY é opcional. Uma chave permite utilizar o limite de
-requisições associado a uma chave da API do NVD; sem chave, a aplicação continua
-tentando consultar a API, sujeita ao limite público.
+| Variável | Padrão | Descrição |
+|---|---|---|
+| `RABBITMQ_HOST` | `localhost` | Host do RabbitMQ |
+| `RABBITMQ_PORT` | `5672` | Porta do RabbitMQ |
+| `RABBITMQ_USERNAME` | `guest` | Usuário do RabbitMQ |
+| `RABBITMQ_PASSWORD` | `guest` | Senha do RabbitMQ |
+| `NVD_API_KEY` | — | Chave opcional da API do NVD |
+| `NMAP_TIMEOUT_SECONDS` | `120` | Timeout de uma execução do Nmap |
+| `SENTRY_JWT_SECRET` | — | Chave utilizada para assinatura dos JWTs |
+| `SENTRY_JWT_EXPIRATION` | `PT2H` | Tempo de expiração do JWT |
+| `SENTRY_CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Origens permitidas pelo CORS |
+| `SENTRY_PUBLIC_DOCS` | `true` | Disponibilidade pública da documentação |
+| `SENTRY_ADMIN_NAME` | `Administrador` | Nome do administrador inicial |
+| `SENTRY_ADMIN_EMAIL` | `admin@sentry.com` | E-mail do administrador inicial |
+| `SENTRY_ADMIN_PASSWORD` | `12345678` | Senha do administrador inicial |
 
-Você pode solicitar uma chave no site oficial:
+> [!IMPORTANT]
+> Em ambientes reais, não utilize as credenciais padrão. Principalmente `SENTRY_JWT_SECRET`, senha do banco e credenciais do administrador devem ser configuradas através de variáveis de ambiente ou outro mecanismo seguro de gerenciamento de segredos.
+
+### NVD API
+
+A chave do NVD é opcional, porém recomendada.
+
+Sem chave, as consultas continuam sendo realizadas dentro do limite público da API.
+
+É possível solicitar uma chave gratuitamente na documentação oficial do NVD:
+
 https://nvd.nist.gov/developers/request-an-api-key
 
-Linux/macOS (exemplo):
+No Windows PowerShell:
+
+```powershell
+$env:NVD_API_KEY="sua-chave"
 ```
+
+Linux/macOS:
+
+```bash
 export NVD_API_KEY="sua-chave"
 ```
 
-Windows PowerShell (exemplo):
-```
-$env:NVD_API_KEY="sua-chave"
-````
+---
 
-## 9. EXECUTAR O BACKEND
+# Executando o projeto
 
-1. Abra um terminal na pasta backend:
+## 1. Banco de dados
+
+A configuração atual do backend utiliza:
+
+```text
+Host: localhost
+Porta: 3306
+Banco: sentry_db
+Usuário: root
+Senha: 123456
 ```
+
+Um exemplo para executar o MySQL através do Docker:
+
+```bash
+docker run --name sentry_db \
+  -e MYSQL_ROOT_PASSWORD=123456 \
+  -e MYSQL_DATABASE=sentry_db \
+  -p 3306:3306 \
+  -d mysql:9.7
+```
+
+---
+
+## 2. RabbitMQ
+
+Execute:
+
+```bash
+docker run -d \
+  --name sentry-rabbitmq \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  rabbitmq:3-management
+```
+
+Painel administrativo:
+
+```text
+http://localhost:15672
+```
+
+Credenciais padrão para desenvolvimento:
+
+```text
+Usuário: guest
+Senha: guest
+```
+
+A aplicação utiliza:
+
+```text
+localhost:5672
+```
+
+para comunicação com o RabbitMQ.
+
+---
+
+## 3. Backend
+
+Entre na pasta:
+
+```bash
 cd backend
 ```
 
-2. Certifique-se de que o RabbitMQ está em execução e que o comando nmap é
-   reconhecido no terminal.
+Execute:
 
-3. Execute com o Maven Wrapper.
+### Linux/macOS
 
-Linux/macOS:
-```
+```bash
 ./mvnw spring-boot:run
 ```
 
-Por padrão, o backend utiliza a porta 8080, salvo configuração externa.
+### Windows
 
-Documentação OpenAPI / Swagger UI, quando a aplicação estiver iniciada:
-`http://localhost:8080/swagger-ui/index.html`
-
-Documento OpenAPI:
-`http://localhost:8080/v3/api-docs`
-
-A primeira execução do Maven Wrapper pode exigir acesso à internet para baixar
-componentes de build.
-
-## 10. ENDPOINTS REST EXISTENTES
-
-### 10.1. Solicitar varredura
-
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
-POST http://localhost:8080/scan/exec
-Content-Type: application/json
 
-Corpo da requisição:
+Por padrão, a API estará disponível em:
 
+```text
+http://localhost:8080
+```
+
+---
+
+## 4. Frontend
+
+Entre na pasta:
+
+```bash
+cd frontend
+```
+
+Instale as dependências:
+
+```bash
+npm install
+```
+
+Configure a URL da API no Windows PowerShell:
+
+```powershell
+$env:VITE_SENTRY_API="http://localhost:8080"
+```
+
+Execute:
+
+```bash
+npm run dev
+```
+
+O Vite disponibilizará o frontend normalmente em:
+
+```text
+http://localhost:5173
+```
+
+---
+
+# Laboratório de testes
+
+O projeto possui um ambiente Docker destinado a fornecer máquinas/serviços controlados para testar as funcionalidades de descoberta do Sentry.
+
+Para iniciar o laboratório:
+
+```bash
+docker compose -f lab-hosts/lab-docker-compose.yml up -d
+```
+
+Verifique os containers:
+
+```bash
+docker ps
+```
+
+Após iniciar o laboratório, os alvos disponíveis podem ser utilizados nas solicitações de scan.
+
+Exemplo:
+
+```json
 {
-  "targets": "192.168.1.10,192.168.1.20,servidor.exemplo.local"
+  "targets": "127.0.0.1"
 }
 ```
 
-O campo targets contém os alvos separados por vírgula. Cada alvo é enviado como
-uma mensagem independente para processamento assíncrono.
+Ao finalizar os testes, derrube o laboratório:
+
+```bash
+docker compose -f lab-hosts/lab-docker-compose.yml down
+```
+
+> [!WARNING]
+> O laboratório deve ser utilizado apenas para testes controlados. Nunca execute varreduras contra sistemas de terceiros sem autorização.
+
+---
+
+# API
+
+A aplicação disponibiliza documentação através do **OpenAPI / Swagger UI**.
+
+Com o backend em execução:
+
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
+Especificação OpenAPI:
+
+```text
+http://localhost:8080/v3/api-docs
+```
+
+## Principais recursos
+
+A API está organizada em recursos relacionados a:
+
+- autenticação;
+- usuários;
+- scans;
+- grupos de execução;
+- ativos;
+- serviços;
+- findings;
+- políticas;
+- regras de políticas.
+
+### Solicitar uma varredura
+
+```http
+POST /scan/exec
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+
+Exemplo:
+
+```json
+{
+  "targets": "192.168.1.10,192.168.1.20"
+}
+```
+
+Cada alvo é validado e processado de forma independente através do RabbitMQ.
+
+---
+
+# Segurança
+
+O Sentry utiliza **Spring Security** para proteção da API e **JWT** para autenticação.
+
+O fluxo básico é:
+
+```text
+Login
+  │
+  ▼
+AuthService
+  │
+  ▼
+JWT
+  │
+  ▼
+Authorization: Bearer <token>
+  │
+  ▼
+Spring Security
+  │
+  ├── autenticado
+  └── não autorizado
+```
+
+Os endpoints administrativos podem ser protegidos de acordo com a role do usuário.
+
+A aplicação também possui tratamento específico para respostas `401 Unauthorized` e `403 Forbidden`.
+
+---
+
+# Tratamento de falhas
+
+O processamento das varreduras considera diferentes tipos de falha.
+
+### Falhas transitórias
+
+São erros que podem ser resolvidos através de uma nova tentativa, como determinadas falhas de comunicação ou indisponibilidade temporária.
+
+Esses erros podem ser processados através da política de retry configurada no RabbitMQ.
+
+### Falhas permanentes
+
+São erros que não devem ser resolvidos simplesmente repetindo a mesma operação, como determinados erros de execução ou validação.
+
+Esses erros são tratados separadamente para evitar ciclos de reprocessamento indefinidos.
+
+### Timeout do Nmap
+
+Cada execução do Nmap possui um limite de tempo configurável:
+
+```text
+NMAP_TIMEOUT_SECONDS=120
+```
+
+Isso impede que uma varredura bloqueada mantenha indefinidamente um processo ativo no backend.
+
+---
+
+# Findings
+
+O modelo de `Finding` centraliza diferentes tipos de problemas encontrados durante uma varredura.
+
+Um finding pode representar, por exemplo:
+
+```text
+VULNERABILITY
+    └── CVE associada a um serviço descoberto
+
+POLICY_VIOLATION
+    └── Serviço ou configuração que viola uma regra
+```
+
+Os findings possuem ciclo de vida próprio e podem ser:
+
+- abertos;
+- tratados;
+- resolvidos;
+- reavaliados.
+
+A identificação por fingerprint permite reconciliar resultados de diferentes scans e evitar duplicações desnecessárias.
+
+---
+
+# Desenvolvimento
+
+Para informações específicas de desenvolvimento, comandos auxiliares, laboratório e execução local, consulte:
+
+`dev-README.md`
+
+Durante o desenvolvimento, recomenda-se manter as seguintes práticas:
+
+- não versionar segredos;
+- utilizar variáveis de ambiente;
+- executar os testes antes de realizar alterações estruturais;
+- utilizar o laboratório controlado para testes de Nmap;
+- validar as mudanças no fluxo completo de scan;
+- manter a documentação da API atualizada.
+
+---
+
+# Testes
+
+Os testes automatizados estão localizados em:
+
+```text
+backend/src/test/
+```
+
+Atualmente existem testes relacionados a componentes como:
+
+- inicialização da aplicação;
+- propriedades de segurança;
+- autenticação;
+- gerenciamento de usuários;
+- bootstrap do administrador;
+- ciclo de vida de findings;
+- reconciliação de findings;
+- persistência/atualização de ativos.
+
+A estratégia de testes continuará sendo expandida para cobrir principalmente:
+
+- execução e parsing do Nmap;
+- validação de alvos;
+- processamento RabbitMQ;
+- consultas ao NVD;
+- avaliação de políticas;
+- fluxo completo de uma varredura.
+
+---
+
+# Status do projeto
+
+O Sentry encontra-se em fase avançada de desenvolvimento.
+
+### Implementado
+
+- [x] Backend Spring Boot
+- [x] API REST
+- [x] Execução de Nmap
+- [x] Parsing do resultado XML
+- [x] Descoberta de hosts, portas e serviços
+- [x] Identificação de CPE
+- [x] Consulta ao NVD
+- [x] RabbitMQ
+- [x] Processamento assíncrono
+- [x] Retry e tratamento de falhas
+- [x] Persistência com JPA/Hibernate
+- [x] MySQL
+- [x] Assets e Services
+- [x] Scan e ScanExecutionGroup
+- [x] Findings
+- [x] Reconciliação de Findings
+- [x] Policies e Policy Rules
+- [x] Verificações de configuração
+- [x] Autenticação JWT
+- [x] Controle de acesso
+- [x] Gerenciamento de usuários
+- [x] Frontend React
+- [x] Rotas protegidas
+- [x] Swagger / OpenAPI
+- [x] Ambiente de laboratório Docker
+
+### Em desenvolvimento
+
+- [ ] Completar integração de todas as telas com a API
+- [ ] Dashboard com indicadores consolidados
+- [ ] Ampliar cobertura de testes automatizados
+- [ ] Testes de integração do fluxo completo de scan
+- [ ] Docker Compose completo da aplicação
+- [ ] Refinamento da interface
+- [ ] Validação e documentação dos experimentos do TCC
+
+---
+
+# Contexto acadêmico
+
+O Sentry é desenvolvido como projeto de **Trabalho de Conclusão de Curso**, explorando a aplicação de conceitos de desenvolvimento de software e segurança da informação.
+
+Entre os principais conceitos estudados e aplicados estão:
+
+- descoberta de ativos;
+- análise de serviços;
+- identificação de vulnerabilidades;
+- CVE e CPE;
+- NVD;
+- políticas de segurança;
+- mensageria assíncrona;
+- processamento concorrente;
+- persistência de dados;
+- autenticação e autorização;
+- gerenciamento do ciclo de vida de achados.
+
+O projeto busca demonstrar não apenas a execução de ferramentas de segurança, mas a construção de uma plataforma capaz de **orquestrar, persistir, correlacionar e organizar os resultados dessas análises**.
+
+---
+
+## Autores
+
+Projeto desenvolvido por:
+
+- Gustavo Santos
+- Leandro Ribeiro
+- Sophia Trotte
+- Vivian Mota
+
+---
+
+## Licença
+
+Projeto desenvolvido para fins acadêmicos.

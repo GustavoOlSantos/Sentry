@@ -1,0 +1,18 @@
+services:
+  metasploitable2:
+    image: tleemcjr/metasploitable2:latest
+    container_name: sentry-target-metasploitable2
+    hostname: victim
+    command: sh -c "/bin/services.sh && tail -f /dev/null"
+    networks:
+      - sentry-lab
+    ports:
+      - "21:21"   # vsftpd 2.3.4 (backdoor CVE-2011-2523)
+      - "22:22"   # OpenSSH antigo
+      - "80:80"   # Apache antigo / DVWA
+      - "3306:3306" # MySQL antigo
+      - "1445:445"   # Samba
+
+networks:
+  sentry-lab:
+    driver: bridge
