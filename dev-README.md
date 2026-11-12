@@ -22,14 +22,14 @@ npm run dev
 
 - Subir imagem: (primeira vez demora um pouco)
     ```
-    docker compose up -d 
+    docker compose -f lab-hosts/lab-docker-compose.yml up -d
     ```
 - Confirmar que subiu: 
     ```
     docker ps
     ```
 - apontar scan para: `{ "targets": "127.0.0.1" }`
-- SEMPRE DERRUBAR APÓS O TÉRMINO DOS TESTES = `docker compose down`
+- SEMPRE DERRUBAR APÓS O TÉRMINO DOS TESTES = `docker compose -f lab-hosts/lab-docker-compose.yml down`
 
 ## Comando para levantar o banco de dados
    ```
