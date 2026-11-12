@@ -28,7 +28,8 @@ npm run dev
     ```
     docker ps
     ```
-- apontar scan para: `{ "targets": "127.0.0.1" }`
+- Descobrir IP interno do lab: `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' sentry-target-metasploitable2`
+- apontar scan para: `{ "targets": "IP_DESCOBERTO" }`
 - SEMPRE DERRUBAR APÓS O TÉRMINO DOS TESTES = `docker compose -f lab-hosts/lab-docker-compose.yml down`
 
 ## Comando para levantar o banco de dados
