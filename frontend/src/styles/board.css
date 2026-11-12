@@ -632,6 +632,11 @@ main.findings-page {
         color: var(--text-secondary);
     }
 
+    .user-avatar{
+        font-weight: 600;
+        color: var(--text-primary)
+    }
+
 .assignee-select {
     font-size: 11pt;
 }

@@ -3,8 +3,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Select from 'react-select';
 
 import api from '../../services/api';
+import userService from '../../services/userService';
+import { getInitials } from '../auth/format';
+
 import { SideBar } from "../../components/sidebar";
 import '../../styles/board.css';
+import '../../styles/user-menu.css';
 
 import dev_gustavo from '../../assets/devs/gustavo.jpg';
 import dev_leandro from '../../assets/devs/leandro.jpg';
@@ -34,28 +38,11 @@ const TYPE_LABELS = {
 
 const MANUAL_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'JUSTIFIED'];
 
-// TODO: trocar por GET /users quando o cadastro de usuários existir
-const MOCK_ASSIGNEES = [
-    { id: 1, name: 'Gustavo Santos', img: dev_gustavo },
-    { id: 2, name: 'Leandro Ribeiro', img: dev_leandro },
-    { id: 3, name: 'Sophia Trotte', img: dev_sophia },
-    { id: 4, name: 'Vivian Motta', img: dev_vivian }
-];
-
-const ASSIGNEE_OPTIONS = [
-    { value: '', label: 'Responsáveis: Todos' },
-    ...MOCK_ASSIGNEES.map(user => ({
-        value: user.id,
-        label: user.name,
-        image: user.img
-    }))
-];
-
 const formatDate = (value) =>
     value ? new Date(value).toLocaleString('pt-BR') : '—';
 
 // ---------- Formulário de gerenciamento (drawer) ----------
-function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
+function FindingManageForm({ finding, developers, onChangeStatus, onChangeAssignee }) {
 
     const [status, setStatus] = useState(finding.status);
     const [justification, setJustification] = useState(finding.justification ?? '');
@@ -115,32 +102,28 @@ function FindingManageForm({ finding, onChangeStatus, onChangeAssignee }) {
                 <Select
                     className="assignee-select"
                     classNamePrefix="assignee"
-                    value={MOCK_ASSIGNEES.map(user => ({
+                    value={
+                        developers
+                            .map(user => ({
+                                value: user.id,
+                                label: user.name
+                            }))
+                            .find(option => option.value === finding.assigneeId) || null
+                    }
+                    options={developers.map(user => ({
                         value: user.id,
-                        label: user.name,
-                        image: user.img
-                    })).find(option => option.value === finding.assigneeId) || null}
-                    options={MOCK_ASSIGNEES.map(user => ({
-                        value: user.id,
-                        label: user.name,
-                        image: user.img
+                        label: user.name
                     }))}
                     onChange={handleAssigneeChange}
                     isClearable
                     formatOptionLabel={(option) => (
-                        <>
-                            <img
-                                src={option.image}
-                                alt=""
-                                style={{
-                                    width: 24,
-                                    height: 24,
-                                    borderRadius: '50%',
-                                    marginRight: 8
-                                }}
-                            />
-                            {option.label}
-                        </>
+                        <div className="assignee-option users-identity">
+                            <span className="user-avatar">
+                                {getInitials(option.label)}
+                            </span>
+
+                            <span>{option.label}</span>
+                        </div>
                     )}
                 />
 
@@ -211,6 +194,16 @@ export default function Board() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    const [developers, setDevelopers] = useState([]);
+
+    const assigneeOptions = useMemo(() => [
+        { value: '', label: 'Responsáveis: Todos' },
+        ...developers.map(user => ({
+            value: user.id,
+            label: user.name
+        }))
+    ], [developers]);
+
     // ---------- Filtros ----------
     const [findingSearchTerm, setFindingSearchTerm] = useState('');
     const [findingAssigneeFilter, setFindingAssigneeFilter] = useState('');
@@ -256,9 +249,32 @@ export default function Board() {
         }
     }, []);
 
+    const fetchDevelopers = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await userService.list();
+
+            const data = Array.isArray(response)
+                ? response
+                : response?.content ?? [];
+
+            const devs = data.filter(user => user.role === 'DEV');
+            setDevelopers(devs);
+
+        } catch (err) {
+            console.error('Falha ao buscar os desenvolvedores:', err);
+            setError('Não foi possível carregar os desenvolvedores.');
+            setDevelopers([]);
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
+        fetchDevelopers();
         fetchFindings();
-    }, [fetchFindings]);
+    }, [fetchFindings, fetchDevelopers]);
 
     // ---------- Filtragem dos findings ----------
     const filteredFindings = useMemo(() => {
@@ -538,31 +554,28 @@ export default function Board() {
                             <Select
                                 className="filter-select"
                                 classNamePrefix="filter"
-                                value={ASSIGNEE_OPTIONS.find(
+                                value={assigneeOptions.find(
                                     option => option.value === findingAssigneeFilter
                                 )}
-                                options={ASSIGNEE_OPTIONS}
+                                options={assigneeOptions}
                                 onChange={(selected) =>
                                     setFindingAssigneeFilter(selected?.value ?? '')
                                 }
                                 isClearable={false}
                                 placeholder="Responsáveis: Todos"
                                 formatOptionLabel={(option) => (
-                                    <div className="filter-option">
-                                        {option.image && (
-                                            <img
-                                                src={option.image}
-                                                alt=""
-                                                style={{
-                                                    width: 24,
-                                                    height: 24,
-                                                    borderRadius: '50%',
-                                                    marginRight: 8
-                                                }}
-                                            />
-                                        )}
+                                    <div className="assignee-option users-identity">
 
-                                        {option.label}
+                                        {option.label == "Responsáveis: Todos" ? (
+                                            null
+                                        ) : (
+                                            <span className="user-avatar">
+                                                {getInitials(option.label)}
+                                            </span>
+                                        )}
+                                        
+
+                                        <span>{option.label}</span>
                                     </div>
                                 )}
                             />
@@ -658,18 +671,20 @@ export default function Board() {
                                                         <p>#{finding.id.slice(0, 8)}</p>
 
                                                         {finding.assigneeId && (
-                                                            <img
-                                                                src={MOCK_ASSIGNEES.find(
-                                                                    user => user.id === finding.assigneeId
-                                                                )?.img}
-                                                                className="assignee-img"
+                                                            <span
+                                                                className="user-avatar"
                                                                 title={
-                                                                    MOCK_ASSIGNEES.find(
+                                                                    developers.find(
                                                                         user => user.id === finding.assigneeId
                                                                     )?.name || finding.assigneeId
                                                                 }
-                                                                alt={String(finding.assigneeId)}
-                                                            />
+                                                            >
+                                                                {getInitials(
+                                                                    developers.find(
+                                                                        user => user.id === finding.assigneeId
+                                                                    )?.name || ''
+                                                                )}
+                                                            </span>
                                                         )}
 
                                                     </div>
@@ -733,6 +748,7 @@ export default function Board() {
                                     <FindingManageForm
                                         key={selectedFinding.id}
                                         finding={selectedFinding}
+                                        developers={developers}
                                         onChangeStatus={changeStatus}
                                         onChangeAssignee={handleAssigneeChange}
                                     />
