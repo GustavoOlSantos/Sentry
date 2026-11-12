@@ -1,6 +1,5 @@
 package br.uva.tcc.sentry.scan.controller;
 
-import br.uva.tcc.sentry.Asset.domain.Asset;
 import br.uva.tcc.sentry.scan.DTO.ScanRequest;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
 import br.uva.tcc.sentry.scan.domain.Scan;

@@ -20,6 +20,7 @@ public class NmapCommandBuilder {
 
         command.add("nmap");
         command.add("-sV");
+        command.add("--version-light");
         command.add("-O");
         command.add("-oX");
         command.add(outputFile);
