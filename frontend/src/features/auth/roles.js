@@ -45,6 +45,7 @@ export const ROUTE_ROLES = {
     "/scans": ALL_ROLES,
     "/reports": ALL_ROLES,
     "/policies": ALL_ROLES,
+    "/policies/nova": PERMISSIONS.writePolicies,
     "/perfil": ALL_ROLES,
     "/novo-scan": PERMISSIONS.runScan,
     "/usuarios": PERMISSIONS.manageUsers,

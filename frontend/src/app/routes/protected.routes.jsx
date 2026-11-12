@@ -8,6 +8,9 @@ import Hosts from "../../features/hosts";
 import Board from "../../features/board";
 import Users from "../../features/users";
 import Profile from "../../features/auth/profile";
+import Policies from "../../features/policies";
+import PolicyDetail from "../../features/policies/detail";
+import NewPolicy from "../../features/policies/new";
 
 /**
  * Envolve uma página com login + perfis permitidos (definidos em ROUTE_ROLES).
@@ -25,4 +28,7 @@ export const protectedRoutes = [
   { path: "/novo-scan", element: guard("/novo-scan", <NovoScan />) },
   { path: "/usuarios",  element: guard("/usuarios", <Users />) },
   { path: "/perfil",    element: guard("/perfil", <Profile />) },
+  { path: "/policies",       element: guard("/policies", <Policies />) },
+  { path: "/policies/nova",  element: guard("/policies/nova", <NewPolicy />) },
+  { path: "/policies/:id",   element: guard("/policies", <PolicyDetail />) },
 ];
