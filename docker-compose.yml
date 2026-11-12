@@ -55,7 +55,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+      VITE_SENTRY_API: ${VITE_SENTRY_API:-http://localhost:8080}
     command: npm run dev -- --host 0.0.0.0
     
   # imagem construída a partir de backend/Dockerfile
@@ -90,13 +90,13 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
 
       # segurança (obrigatório: SENTRY_JWT_SECRET com 32+ caracteres)
-      SENTRY_JWT_SECRET: ${SENTRY_JWT_SECRET:-}
+      SENTRY_JWT_SECRET: ${SENTRY_JWT_SECRET:-prescribe-awaken-exorcism-smirk-unwrapped-voicing-those-postage}
       SENTRY_JWT_EXPIRATION: ${SENTRY_JWT_EXPIRATION:-PT2H}
       SENTRY_CORS_ALLOWED_ORIGINS: ${SENTRY_CORS_ALLOWED_ORIGINS:-http://localhost:5173}
       SENTRY_PUBLIC_DOCS: ${SENTRY_PUBLIC_DOCS:-true}
       SENTRY_ADMIN_NAME: ${SENTRY_ADMIN_NAME:-Administrador}
-      SENTRY_ADMIN_EMAIL: ${SENTRY_ADMIN_EMAIL:-}
-      SENTRY_ADMIN_PASSWORD: ${SENTRY_ADMIN_PASSWORD:-}
+      SENTRY_ADMIN_EMAIL: ${SENTRY_ADMIN_EMAIL:-teste@teste.com}
+      SENTRY_ADMIN_PASSWORD: ${SENTRY_ADMIN_PASSWORD:-12345678}
 
       # scanner
       NVD_API_KEY: ${NVD_API_KEY:-}
@@ -107,7 +107,16 @@ services:
       timeout: 5s
       retries: 6
       start_period: 90s
-
+    networks:
+    - default
+    - sentry-lab
+    
 volumes:
   mysql_data:
   rabbitmq_data:
+
+
+networks:
+  sentry-lab:
+    name: sentry-lab
+    driver: bridge
