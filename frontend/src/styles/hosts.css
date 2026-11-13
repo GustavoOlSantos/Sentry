@@ -323,15 +323,33 @@
 }
 
 .btn-update {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-
-    background-color: transparent;
-    border: none;
-    color: var(--brand-primary);
-    font-size: 11pt;
+    justify-content: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 18px;
+    border: 1px solid var(--border-input);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
     cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+
+    color: var(--text-secondary);
+    background-color: transparent;
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    &:hover:not(:disabled) {
+        color: var(--text-primary);
+        background-color: var(--bg-surface-hover);
+    }
 }
 
 .message {

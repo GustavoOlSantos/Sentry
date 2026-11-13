@@ -7,13 +7,10 @@ import userService from '../../services/userService';
 import { getInitials } from '../auth/format';
 
 import { SideBar } from "../../components/sidebar";
+import { FindingManageForm } from "./manage-form";
+
 import '../../styles/board.css';
 import '../../styles/user-menu.css';
-
-import dev_gustavo from '../../assets/devs/gustavo.jpg';
-import dev_leandro from '../../assets/devs/leandro.jpg';
-import dev_sophia from '../../assets/devs/sophia.jpg';
-import dev_vivian from '../../assets/devs/vivian.jpg';
 
 const FINDING_COLUMNS = [
     { id: 'open', title: 'ABERTO', statuses: ['OPEN'], dropStatus: 'OPEN', userDroppable: true },
@@ -36,157 +33,9 @@ const TYPE_LABELS = {
     POLICY_VIOLATION: 'Política'
 };
 
-const MANUAL_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'JUSTIFIED'];
-
 const formatDate = (value) =>
     value ? new Date(value).toLocaleString('pt-BR') : '—';
 
-// ---------- Formulário de gerenciamento (drawer) ----------
-function FindingManageForm({ finding, developers, onChangeStatus, onChangeAssignee }) {
-
-    const [status, setStatus] = useState(finding.status);
-    const [justification, setJustification] = useState(finding.justification ?? '');
-    const [submitting, setSubmitting] = useState(false);
-    const [assigneeError, setAssigneeError] = useState(null);
-    const [formError, setFormError] = useState(null);
-
-    const needsJustification = status === 'JUSTIFIED';
-
-    const dirty =
-        status !== finding.status ||
-        (needsJustification &&
-            justification.trim() !== (finding.justification ?? '').trim());
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        if (needsJustification && !justification.trim()) {
-            setFormError('Informe a justificativa para marcar como Justificada.');
-            return;
-        }
-
-        setFormError(null);
-        setSubmitting(true);
-
-        const ok = await onChangeStatus(
-            finding,
-            status,
-            needsJustification ? justification.trim() : undefined
-        );
-
-        setSubmitting(false);
-
-        if (!ok) setStatus(finding.status);
-    };
-
-    const handleAssigneeChange = async (selected) => {
-        setAssigneeError(null);
-
-        const success = await onChangeAssignee(
-            finding.id,
-            selected?.value ?? null
-        );
-
-        if (!success) {
-            setAssigneeError('Não foi possível atualizar o responsável. A alteração foi desfeita.');
-        }
-    };
-
-    return (
-        <section className="drawer-section drawer-manage">
-            <h5>Gerenciar</h5>
-
-            <label className="manage-field">
-                <span>Responsável</span>
-
-                <Select
-                    className="assignee-select"
-                    classNamePrefix="assignee"
-                    value={
-                        developers
-                            .map(user => ({
-                                value: user.id,
-                                label: user.name
-                            }))
-                            .find(option => option.value === finding.assigneeId) || null
-                    }
-                    options={developers.map(user => ({
-                        value: user.id,
-                        label: user.name
-                    }))}
-                    onChange={handleAssigneeChange}
-                    isClearable
-                    formatOptionLabel={(option) => (
-                        <div className="assignee-option users-identity">
-                            <span className="user-avatar">
-                                {getInitials(option.label)}
-                            </span>
-
-                            <span>{option.label}</span>
-                        </div>
-                    )}
-                />
-
-                {assigneeError && (
-                    <p className="manage-error">{assigneeError}</p>
-                )}
-            </label>
-
-            <form onSubmit={handleSubmit}>
-                <label className="manage-field">
-                    <span>Status</span>
-
-                    <select
-                        value={status}
-                        onChange={(e) => {
-                            setStatus(e.target.value);
-                            setFormError(null);
-                        }}
-                        disabled={submitting}
-                    >
-                        {!MANUAL_STATUSES.includes(finding.status) && (
-                            <option value={finding.status} disabled>
-                                {STATUS_LABELS[finding.status] || finding.status}
-                            </option>
-                        )}
-
-                        {MANUAL_STATUSES.map(s => (
-                            <option key={s} value={s}>
-                                {STATUS_LABELS[s]}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-
-                {needsJustification && (
-                    <label className="manage-field">
-                        <span>Justificativa</span>
-
-                        <textarea
-                            rows={3}
-                            value={justification}
-                            onChange={(e) => setJustification(e.target.value)}
-                            placeholder="Explique por que este finding é aceito/justificado..."
-                            disabled={submitting}
-                        />
-                    </label>
-                )}
-
-                {formError && (
-                    <p className="manage-error">{formError}</p>
-                )}
-
-                <button
-                    type="submit"
-                    className="btn-update-drawer"
-                    disabled={!dirty || submitting}
-                >
-                    {submitting ? 'Enviando...' : 'Enviar'}
-                </button>
-            </form>
-        </section>
-    );
-}
 
 export default function Board() {
 
@@ -479,16 +328,6 @@ export default function Board() {
                         <h2>Findings</h2>
                         <p>Gerencie e acompanhe as ocorrências identificadas no ambiente.</p>
                     </div>
-
-                    <button
-                        className="btn-update"
-                        onClick={fetchFindings}
-                        disabled={loading}
-                        type="button"
-                    >
-                        <i className={`fa-solid fa-rotate ${loading ? 'fa-spin' : ''}`}></i>
-                        {loading ? 'Atualizando...' : 'Atualizar'}
-                    </button>
                 </header>
 
                 {error && (
@@ -579,6 +418,11 @@ export default function Board() {
                                     </div>
                                 )}
                             />
+
+                            <button className="btn-update" onClick={fetchFindings} disabled={loading} type="button">
+                                <i className={`fa-solid fa-rotate ${loading ? 'fa-spin' : ''}`}></i>
+                                {loading ? 'Atualizando...' : 'Atualizar'}
+                            </button>
 
                         </section>
 
