@@ -389,3 +389,13 @@
     transition: none;
   }
 }
+
+
+.scans-follow-link{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    font-weight: 600;
+    text-decoration: none;
+}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import '../../styles/novo-scan.css';
 
 import api from '../../services/api';
@@ -10,6 +11,7 @@ export function NovoScan() {
   const [backendStatus, setBackendStatus] = useState('');
   const [response, setResponse] = useState('');
   const [responseStatus, setResponseStatus] = useState('');
+  const [groupId, setGroupId] = useState(null);
   const [error, setError] = useState('');
 
   function adicionarCampo() {
@@ -50,6 +52,7 @@ export function NovoScan() {
     api.post('/scan/exec', { targets: enderecos }).then(res => {
         setResponse(res.data?.message);
         setResponseStatus(res.data?.status);
+        setGroupId(res.data?.groupId ?? null);
     })
     .catch(err => {
         console.error("Erro enviar solicitação de scan:", err);
@@ -171,6 +174,12 @@ export function NovoScan() {
                     </div> : '' 
                 }
                 
+                {groupId && (responseStatus == "ACCEPTED" || responseStatus == "PARTIAL") ?
+                    <Link to={`/scans/grupo/${groupId}`} className="btn primary scans-follow-link">
+                        Acompanhar varredura <i className="fa-solid fa-arrow-right"></i>
+                    </Link> : ''
+                }
+
                 {error ? 
                     <div className="request-error-backdrop">
                         <p className="request-error"> <i className="fa-solid fa-circle-exclamation"></i> &nbsp;{error} </p> 

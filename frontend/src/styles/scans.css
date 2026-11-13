@@ -1,0 +1,342 @@
+/* Telas de varreduras. Reaproveita as classes genéricas de users.css (botões, cards, filtros, tabela). */
+
+/* ---------- selos de status ---------- */
+.scan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    vertical-align: middle;
+    color: var(--text-secondary);
+    background-color: var(--bg-surface-hover);
+
+    .scan-badge__dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background-color: currentColor;
+    }
+
+    &.scan-badge--completed {
+        color: var(--severity-low);
+        background-color: var(--surface-success);
+    }
+
+    &.scan-badge--running,
+    &.scan-badge--accepted {
+        color: var(--brand-light);
+        background-color: var(--surface-info);
+
+        .scan-badge__dot {
+            animation: scan-pulse 1.2s ease-in-out infinite;
+        }
+    }
+
+    &.scan-badge--pending {
+        color: var(--text-secondary);
+        background-color: var(--bg-surface-hover);
+    }
+
+    &.scan-badge--partial {
+        color: var(--severity-medium);
+        background-color: var(--surface-medium);
+    }
+
+    &.scan-badge--failed,
+    &.scan-badge--not-found {
+        color: var(--severity-critical);
+        background-color: var(--surface-critical);
+    }
+
+    &.scan-badge--cancelled {
+        color: var(--text-muted);
+        background-color: var(--bg-surface-hover);
+    }
+}
+
+@keyframes scan-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.7); }
+}
+
+.severity-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--text-secondary);
+    background-color: var(--bg-surface-hover);
+
+    &.severity-badge--critical { color: var(--severity-critical); background-color: var(--surface-critical); }
+    &.severity-badge--high { color: var(--severity-high); background-color: var(--surface-high, rgba(255, 140, 66, 0.14)); }
+    &.severity-badge--medium { color: var(--severity-medium); background-color: var(--surface-medium); }
+    &.severity-badge--low { color: var(--severity-low); background-color: var(--surface-success); }
+    &.severity-badge--info { color: var(--brand-light); background-color: var(--surface-info); }
+}
+
+/* ---------- lista e tabelas ---------- */
+.scans-table {
+    min-width: 900px;
+}
+
+.scans-row {
+    cursor: pointer;
+}
+
+.scans-link {
+    color: var(--brand-light);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.scans-targets {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+
+    code {
+        padding: 1px 7px;
+        color: var(--text-secondary);
+        background-color: var(--bg-input);
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    em {
+        color: var(--text-muted);
+        font-size: 12px;
+        font-style: normal;
+    }
+}
+
+.scans-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 130px;
+
+    small {
+        color: var(--text-muted);
+        font-size: 12px;
+    }
+}
+
+.scans-progress__bar {
+    flex: 1;
+    height: 7px;
+    overflow: hidden;
+    background-color: var(--bg-input);
+    border-radius: 999px;
+}
+
+.scans-progress__fill {
+    display: block;
+    height: 100%;
+    background-color: var(--brand-primary);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+
+    &.scans-progress__fill--completed { background-color: #22c55e; }
+    &.scans-progress__fill--partial { background-color: var(--severity-medium); }
+    &.scans-progress__fill--failed,
+    &.scans-progress__fill--not-found { background-color: #ef4444; }
+    &.scans-progress__fill--cancelled { background-color: var(--text-muted); }
+}
+
+.scans-inline-error {
+    display: block;
+    margin-top: 3px;
+    color: var(--severity-critical);
+    font-size: 12px;
+}
+
+.scans-warning-count {
+    color: var(--severity-medium);
+}
+
+.scans-live {
+    margin-left: 12px;
+    color: var(--brand-light);
+    font-size: 12px;
+}
+
+/* ---------- navegação e cabeçalho do detalhe ---------- */
+.scans-breadcrumb {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 10px 10px;
+    color: var(--text-muted);
+    font-size: 13px;
+
+    a {
+        color: var(--text-secondary);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--text-primary);
+            text-decoration: underline;
+        }
+    }
+
+    i {
+        font-size: 10px;
+    }
+
+    span {
+        color: var(--text-primary);
+    }
+}
+
+.users-heading h2 .scan-badge {
+    margin-left: 10px;
+    font-size: 13px;
+}
+
+.scans-target-title {
+    font-size: 22pt;
+}
+
+.scans-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px 24px;
+    margin: 0 0 20px;
+    padding: 16px 20px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+
+    dt {
+        color: var(--text-muted);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    dd {
+        margin: 3px 0 0;
+        color: var(--text-primary);
+        font-size: 14px;
+        word-break: break-all;
+    }
+
+    code {
+        font-size: 12px;
+    }
+}
+
+.scans-section-title {
+    margin: 26px 0 12px;
+    color: var(--text-primary);
+    font-size: 15pt;
+}
+
+/* ---------- comando, avisos, portas ---------- */
+.scans-command {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    pre {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        padding: 14px 16px;
+        overflow-x: auto;
+        color: var(--text-primary);
+        background-color: var(--bg-input);
+        border: 1px solid var(--border-input);
+        border-radius: 8px;
+        font-size: 13px;
+    }
+}
+
+.scans-warnings {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    color: var(--severity-medium);
+    background-color: var(--surface-medium);
+    border-radius: 8px;
+    font-size: 14px;
+
+    ul {
+        margin: 8px 0 0;
+        padding-left: 20px;
+    }
+
+    li {
+        margin-bottom: 3px;
+    }
+}
+
+.scans-ports {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.scans-port {
+    padding: 2px 8px;
+    color: var(--text-secondary);
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.scans-finding-title {
+    display: block;
+    color: var(--text-primary);
+}
+
+.scans-finding-code {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.scans-footnote {
+    margin: 14px 0 0;
+    color: var(--text-muted);
+    font-size: 12.5px;
+
+    a {
+        color: var(--brand-light);
+    }
+}
+
+.scans-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 50px 0;
+    color: var(--text-muted);
+
+    i {
+        font-size: 32px;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .scans-command {
+        flex-direction: column;
+    }
+}
