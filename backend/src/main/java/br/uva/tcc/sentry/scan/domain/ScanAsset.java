@@ -8,11 +8,15 @@ import jakarta.persistence.*;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 /**
  * Associação entre um {@link Scan} e os {@link Asset}s que ele encontrou
  * (N:N com atributos próprios: quando foi descoberto e em qual estado).
  */
+@AllArgsConstructor 
+@NoArgsConstructor 
 @Entity
 @Table(name = "scan_asset",
        uniqueConstraints = @UniqueConstraint(name = "uk_scan_asset", columnNames = {"scan_id", "asset_id"}))

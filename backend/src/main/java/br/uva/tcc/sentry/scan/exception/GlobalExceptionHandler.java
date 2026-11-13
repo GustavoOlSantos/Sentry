@@ -38,6 +38,7 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, "Falha temporária na execução do scan", ex.getMessage());
     }
 
+    @SuppressWarnings("deprecation")
     @ExceptionHandler(PermanentScanException.class)
     public ResponseEntity<Map<String, Object>> handlePermanentScan(PermanentScanException ex) {
         // falha que não vai se resolver sozinha tentando de novo (comando/alvo inválido,

@@ -1,14 +1,16 @@
 package br.uva.tcc.sentry.scan.controller;
 
+import br.uva.tcc.sentry.scan.DTO.ScanDetailResponse;
 import br.uva.tcc.sentry.scan.DTO.ScanRequest;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
+import br.uva.tcc.sentry.scan.DTO.ScanSummaryResponse;
 import br.uva.tcc.sentry.scan.domain.Scan;
 import br.uva.tcc.sentry.scan.domain.ScanStatus;
+import br.uva.tcc.sentry.scan.services.ScanQueryService;
 import br.uva.tcc.sentry.scan.services.ScanService;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -22,23 +24,27 @@ import org.springframework.web.bind.annotation.*;
 public class ScanController{
 
    private final ScanService scanService;
+   private final ScanQueryService scanQueryService;
 
-    public ScanController(ScanService scanService) {
+    public ScanController(ScanService scanService, ScanQueryService scanQueryService) {
         this.scanService = scanService;
+        this.scanQueryService = scanQueryService;
     }
 
+    /** Os scans mais recentes (de qualquer grupo), em formato resumido. */
     @GetMapping()
-    public List<Scan> getAllScans(){
-       return scanService.findAll();
+    public List<ScanSummaryResponse> getAllScans(){
+       return scanQueryService.findRecentScans();
     }
 
+    /** Detalhes de um scan: comando, avisos, ativos encontrados e findings detectados. */
     @GetMapping("/id/{id}")
-    public Optional<Scan> getSingleScanByID(@PathVariable UUID id){
-        return scanService.findById(id);
+    public ScanDetailResponse getSingleScanByID(@PathVariable UUID id){
+        return scanQueryService.findScanDetail(id);
     }
 
     @DeleteMapping("/id/{id}")
-    public void deleteById(UUID id){
+    public void deleteById(@PathVariable UUID id){
         scanService.deleteById(id);
     }
 

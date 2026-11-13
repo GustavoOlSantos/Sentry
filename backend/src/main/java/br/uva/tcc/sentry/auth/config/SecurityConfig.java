@@ -47,14 +47,14 @@ import br.uva.tcc.sentry.auth.security.RestAuthenticationEntryPoint;
  *  /v3/api-docs, /swagger-ui                     público se sentry.security.public-docs=true
  *  /users/**                                     ADM
  *  /auth/me, /auth/me/password                   qualquer usuário autenticado
- *  GET /asset, /findings, /scan, /policies,      ADM, DEV, USER (leitura)
- *      /reports
+ *  GET /asset, /findings, /scan, /scanGroup,     ADM, DEV, USER (leitura)
+ *      /policy, /policyRule, /reports
  *  POST /scan/exec                               ADM, DEV
  *  POST /findings/{id}/status                    ADM, DEV
  *  PATCH /findings/{id}/assignee                 ADM, DEV
  *  PUT /asset/{id}                               ADM, DEV
  *  DELETE /asset/{id}                            ADM
- *  escrita em /policies/**                       ADM
+ *  escrita em /policy/**, /policyRule/**         ADM
  *  qualquer outra rota                           ADM  (padrão seguro: rota nova nasce restrita)
  * </pre>
  */
@@ -91,15 +91,16 @@ public class SecurityConfig {
                     auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
                 }
 
-                // ---- administração de usuários ----
-                auth.requestMatchers("/users/**").hasRole(ADM);
-
                 // ---- qualquer usuário autenticado ----
                 auth.requestMatchers("/auth/me", "/auth/me/**").authenticated();
 
                 // ---- leitura: ADM, DEV e USER ----
                 auth.requestMatchers(HttpMethod.GET,
-                        "/asset/**", "/findings/**", "/scan/**", "/policies/**", "/reports/**").authenticated();
+                        "/asset/**", "/findings/**", "/scan/**", "/scanGroup/**",
+                        "/policy/**", "/policyRule/**", "/reports/**", "/users").authenticated();
+
+                // ---- administração de usuários ----
+                auth.requestMatchers("/users/**").hasRole(ADM);
 
                 // ---- operação: ADM e DEV ----
                 auth.requestMatchers(HttpMethod.POST, "/scan/exec").hasAnyRole(ADM, DEV);
@@ -109,7 +110,7 @@ public class SecurityConfig {
 
                 // ---- somente ADM ----
                 auth.requestMatchers(HttpMethod.DELETE, "/asset/*").hasRole(ADM);
-                auth.requestMatchers("/policies/**").hasRole(ADM); // escrita (o GET já foi liberado acima)
+                auth.requestMatchers("/policy/**", "/policyRule/**").hasRole(ADM); // escrita (o GET já foi liberado acima)
 
                 // ---- padrão seguro ----
                 auth.anyRequest().hasRole(ADM);
