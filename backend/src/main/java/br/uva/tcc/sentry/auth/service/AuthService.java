@@ -2,6 +2,8 @@ package br.uva.tcc.sentry.auth.service;
 
 import java.time.LocalDateTime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,8 @@ import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -47,6 +51,7 @@ public class AuthService {
 
         // mesma resposta para e-mail inexistente, senha errada e usuário desativado
         if (user == null || !passwordMatches || !user.isActive()) {
+            log.info("Tentativa de login mal sucedida para o email {}", request.email());
             throw new InvalidCredentialsException();
         }
 
@@ -55,6 +60,7 @@ public class AuthService {
 
         TokenIssuer.IssuedToken token = tokenIssuer.issue(user);
 
+        log.info("Usuário {} logado com sucesso.", user.getName());
         return new LoginResponse(token.value(), "Bearer", token.expiresInSeconds(), UserResponse.from(user));
     }
 
@@ -73,18 +79,21 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
             // 400 e não 401: um 401 faria o frontend deslogar o usuário por ter errado a senha atual
+            log.info("[userID: {}] Erro ao trocar senha: A senha atual está incorreta.", userId);
             throw new InvalidPasswordException("A senha atual está incorreta.");
         }
 
         PasswordPolicy.validate(request.newPassword());
 
         if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            log.info("[userID: {}] Erro ao trocar senha: A nova senha deve ser diferente da atual.", userId);
             throw new InvalidPasswordException("A nova senha deve ser diferente da atual.");
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         user.setPasswordChangedAt(LocalDateTime.now());
         userRepository.save(user);
+        log.info("[userID: {}] Senha alterada com sucesso.", userId);
     }
 
     private User findUser(Long userId) {

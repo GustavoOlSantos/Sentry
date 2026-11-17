@@ -1,0 +1,27 @@
+name: sentry-lab1
+
+services:
+  metasploitable2:
+    image: tleemcjr/metasploitable2:latest
+    container_name: sentry-target1
+    hostname: victim
+    command: ["sh", "/scripts/target1-services.sh"]
+    volumes:
+      - ./scripts/target1-services.sh:/scripts/target1-services.sh:ro
+    networks:
+      - sentry-lab
+    ports:
+      - "21:21" # vsftpd 2.3.4 (backdoor CVE-2011-2523)
+      - "22:22" # OpenSSH antigo
+      - "23:23" # Telnet
+      - "80:80"  # Apache antigo / DVWA
+      - "139:139" # Samba (enumeração)
+      - "1234:445" # Samba (misconfig)
+      - "3307:3306" # MySQL antigo
+      - "5433:5432" # Postgree antigo
+      - "8180:8180" # Servidor Java/web
+
+networks:
+  sentry-lab:
+    external: true
+    name: sentry-lab

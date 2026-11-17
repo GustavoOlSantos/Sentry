@@ -1,5 +1,5 @@
 ## Comando para executar o Spring Boot
-```
+```bash
 ./mvnw spring-boot:run
 ```
 
@@ -21,19 +21,24 @@ npm run dev
 ## Lab de testes do Scan
 
 - Subir imagem: (primeira vez demora um pouco)
-    ```
-    docker compose -f lab-hosts/lab-docker-compose.yml up -d
+    ```bash
+    docker compose -f lab-hosts/lab1-compose.yml up -d
+    docker compose -f lab-hosts/lab2-compose.yml up -d
     ```
 - Confirmar que subiu: 
-    ```
+    ```bash
     docker ps
     ```
-- Descobrir IP interno do lab: `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' sentry-target-metasploitable2`
+- Descobrir IP interno do lab: 
+    ```bash
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' sentry-target1
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' sentry-target2
+    ```
 - apontar scan para: `{ "targets": "IP_DESCOBERTO" }`
 - SEMPRE DERRUBAR APÓS O TÉRMINO DOS TESTES = `docker compose -f lab-hosts/lab-docker-compose.yml down`
 
 ## Comando para levantar o banco de dados
-   ```
+   ```bash
     docker run --name sentry_db -e MYSQL_ROOT_PASSWORD=123456 -e MYSQL_DATABASE=sentry_db -p 3306:3306 -d mysql:9.7
    ```
 

@@ -1,0 +1,26 @@
+name: sentry-lab2
+
+services:
+  metasploitable2:
+    image: tleemcjr/metasploitable2:latest
+    container_name: sentry-target2
+    hostname: victim2
+    command: ["sh", "/scripts/target2-services.sh"]
+    volumes:
+      - ./scripts/target2-services.sh:/scripts/target2-services.sh:ro
+    networks:
+      - sentry-lab
+    ports:
+      - "1099:1099" # Java exposto
+      - "1524:1524" # Bindshell Serviço Crítico
+      - "3632:3632" # distccd (serviço de compilação vulnerável)
+      - "5900:5900" # VNC (acesso remoto)
+      - "6667:6667" # UnrealIRCd (IRC + vulnerabilidade conhecida)
+      - "8009:8009" # AJP (Apache JServ)
+      - "8787:8787" # Ruby DRb (Serviço Ruby)
+
+
+networks:
+  sentry-lab:
+    external: true
+    name: sentry-lab

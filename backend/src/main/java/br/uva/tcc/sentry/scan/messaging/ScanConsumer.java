@@ -125,17 +125,23 @@ public class ScanConsumer {
 
             for (var service : host.services()) {
                 if (!service.hasCpe() || service.getVersion() == null) {
+                    log.info("Service {} não possui uma cpe ou versão válida para ser consultada.\ncpe: {}\nversion: {}", service.getServiceName(), service.getCpe(), service.getVersion());
                     // sem CPE/versão não dá para consultar o NVD: ausência de CVE aqui não prova nada
                     coverage.markServiceUnverified(host.asset(), service);
                     continue;
                 }
 
+                log.info("Buscando vulnerabilidades para o serviço {}", service.getServiceName());
                 var lookupResult = vulnerabilityLookupService.lookupByCpe(service.getCpe());
 
                 if (!lookupResult.successful()) {
                     scan.addWarning(lookupResult.errorMessage());
                     scanRepository.save(scan);
                     coverage.markServiceUnverified(host.asset(), service);
+
+                    log.info("Não foi possível buscar vulnerabilidades para esse serviço.");
+                    log.info("Erro: {}", lookupResult.errorMessage());
+
                     continue;
                 }
 

@@ -5,7 +5,7 @@ const scanService = {
     /** Grupos mais recentes, com status derivado, scans por status, ativos e findings. */
     async listGroups() {
         const { data } = await api.get('/scanGroup');
-        return data;
+        return typeof data === "string" ? JSON.parse(data) : data;
     },
 
     /** { group, scans[] } */
