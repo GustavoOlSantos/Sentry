@@ -835,25 +835,44 @@ Os testes automatizados estão localizados em:
 backend/src/test/
 ```
 
-Atualmente existem testes relacionados a componentes como:
+A suíte combina testes unitários de regras de negócio com testes de serviços que utilizam repositórios em memória e testes de contexto da aplicação. O objetivo é validar os comportamentos críticos sem exigir 100% de cobertura de código.
+
+Entre os cenários cobertos estão:
 
 - inicialização da aplicação;
-- propriedades de segurança;
-- autenticação;
-- gerenciamento de usuários;
+- propriedades e componentes de segurança;
+- autenticação e gerenciamento de usuários;
 - bootstrap do administrador;
-- ciclo de vida de findings;
-- reconciliação de findings;
-- persistência/atualização de ativos.
+- ciclo de vida e transições de `Finding`;
+- reconciliação e deduplicação de findings;
+- atualização de ativos;
+- resolução do status de grupos de scans;
+- consultas e agregações de scans;
+- validação de alvos IPv4, IPv6 e CIDR;
+- proteção da construção de comandos do Nmap contra entradas inválidas;
+- conversão de CPE do formato utilizado pelo Nmap para CPE 2.3;
+- ciclo de vida de `Scan`;
+- avaliação de SSH e portas de banco de dados expostas;
+- criação e normalização de `Finding` por `FindingFactory`;
+- mapeamento das respostas do NVD e seleção de métricas CVSS.
 
-A estratégia de testes continuará sendo expandida para cobrir principalmente:
+No estado atual, a suíte contém **18 classes de teste e 130 casos anotados com `@Test`**, considerando os testes existentes e os cenários adicionados para os componentes críticos do backend.
 
-- execução e parsing do Nmap;
-- validação de alvos;
-- processamento RabbitMQ;
-- consultas ao NVD;
-- avaliação de políticas;
-- fluxo completo de uma varredura.
+Para executar a suíte completa no Windows:
+
+```powershell
+cd backend
+.\mvnw.cmd test
+```
+
+No Linux/macOS:
+
+```bash
+cd backend
+./mvnw test
+```
+
+A estratégia prioriza cenários de maior risco para o TCC — validação de entrada, regras de segurança, correlação de vulnerabilidades, ciclo de vida dos scans e findings — em vez de buscar cobertura artificial de getters, setters ou código trivial.
 
 ---
 
