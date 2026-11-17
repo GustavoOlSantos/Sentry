@@ -26,12 +26,18 @@ public class ConfigFindingService {
     }
 
     public List<Finding> check(DiscoveredHost host, Scan scan) {
-        var findings = checks.stream()
-                .flatMap(check -> check.check(host).stream())
-                .toList();
+        return evaluate(host, scan).findings();
+    }
 
-        findings.forEach(finding -> finding.setScan(scan));
+    public CheckOutcome evaluate(DiscoveredHost host, Scan scan) {
+        CheckOutcome outcome = CheckOutcome.empty();
 
-        return findings;
+        for (ConfigCheck check : checks) {
+            outcome = outcome.plus(check.evaluate(host));
+        }
+
+        outcome.findings().forEach(finding -> finding.setScan(scan));
+
+        return outcome;
     }
 }

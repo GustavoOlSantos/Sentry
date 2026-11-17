@@ -1,6 +1,7 @@
 package br.uva.tcc.sentry.finding.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import br.uva.tcc.sentry.finding.DTO.FindingBoardResponse;
@@ -26,7 +27,7 @@ public class FindingController {
     }
 
     @PostMapping("/{findingId}/status")
-    public ResponseEntity<?> updateFindingStatus(@PathVariable UUID findingId, @RequestBody UpdateFindingStatusRequest request) {
+    public ResponseEntity<?> updateFindingStatus(@PathVariable UUID findingId, @RequestBody UpdateFindingStatusRequest request, Authentication authentication) {
         FindingStatus newStatus = request.status();
         String justification = request.justification();
 
@@ -36,7 +37,8 @@ public class FindingController {
         if (newStatus == FindingStatus.JUSTIFIED && (justification == null || justification.trim().isEmpty())) return ResponseEntity.badRequest().body("O campo 'justification' é obrigatório quando o status é JUSTIFIED.");
 
         // finding inexistente → 404, regra de transição violada → 409 (ver GlobalExceptionHandler)
-        return ResponseEntity.ok(findingService.updateFindingStatus(findingId, newStatus, justification));
+        Long userId = authentication != null ? Long.valueOf(authentication.getName()) : null;
+        return ResponseEntity.ok(findingService.updateFindingStatus(findingId, newStatus, justification, userId));
     }
 
     @PatchMapping("/{findingId}/assignee")

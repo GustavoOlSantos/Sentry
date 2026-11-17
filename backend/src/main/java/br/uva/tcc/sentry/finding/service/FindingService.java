@@ -24,6 +24,7 @@ public class FindingService {
 
     private final FindingRepository findingRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final FindingTimeline timeline;
     
     @Transactional(readOnly = true)
     public List<FindingBoardResponse> findAll() {
@@ -40,12 +41,15 @@ public class FindingService {
      * reteste, que roda depois do commit.
      */
     @Transactional
-    public UpdateFindingStatusResponse updateFindingStatus(UUID findingId, FindingStatus newStatus, String justification) {
+    public UpdateFindingStatusResponse updateFindingStatus(UUID findingId, FindingStatus newStatus,
+                                                           String justification, Long changedByUserId) {
         Finding finding = findById(findingId);
         FindingStatus previousStatus = finding.getStatus();
+        LocalDateTime now = LocalDateTime.now();
 
-        finding.changeStatusByUser(newStatus, justification, LocalDateTime.now());
+        finding.changeStatusByUser(newStatus, justification, now);
         findingRepository.save(finding);
+        timeline.recordTransition(finding, previousStatus, finding.getStatus(), now, changedByUserId, null);
 
         String message = "Status do finding atualizado com sucesso.";
 

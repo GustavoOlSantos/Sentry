@@ -42,9 +42,11 @@ public class FindingReconciler {
     private static final Logger log = LoggerFactory.getLogger(FindingReconciler.class);
 
     private final FindingRepository findingRepository;
+    private final FindingTimeline timeline;
 
     /** Resumo do que a reconciliação fez, para log e testes. */
-    public record Result(int created, int refreshed, int reopened, int validationFailed, int validated) {
+    public record Result(int created, int refreshed, int reopened, int validationFailed, int validated,
+                         Map<String, Finding> findingsByFingerprint) {
     }
 
     @Transactional
@@ -73,6 +75,7 @@ public class FindingReconciler {
 
         int created = 0, refreshed = 0, reopened = 0, validationFailed = 0, validated = 0;
         List<Finding> toCreate = new ArrayList<>();
+        Map<String, Finding> reconciled = new LinkedHashMap<>();
 
         for (Map.Entry<String, Finding> entry : observed.entrySet()) {
             Finding known = existing.get(entry.getKey());
@@ -84,6 +87,7 @@ public class FindingReconciler {
                     fresh.setDetectedAt(now);
                 }
                 toCreate.add(fresh);
+                reconciled.put(entry.getKey(), fresh);
                 created++;
                 continue;
             }
@@ -91,6 +95,11 @@ public class FindingReconciler {
             FindingStatus before = known.getStatus();
             known.onSeenAgain(entry.getValue(), scanStartedAt, now);
             FindingStatus after = known.getStatus();
+            reconciled.put(entry.getKey(), known);
+
+            if (before != after) {
+                timeline.recordTransition(known, before, after, now, null, scan);
+            }
 
             if (before == FindingStatus.VALIDATED && after == FindingStatus.OPEN) {
                 reopened++;
@@ -111,7 +120,12 @@ public class FindingReconciler {
                     continue;
                 }
 
+                FindingStatus before = finding.getStatus();
                 finding.onNotSeen(scanStartedAt, now);
+
+                if (finding.getStatus() != before) {
+                    timeline.recordTransition(finding, before, finding.getStatus(), now, null, scan);
+                }
 
                 if (finding.getStatus() == FindingStatus.VALIDATED) {
                     validated++;
@@ -123,6 +137,11 @@ public class FindingReconciler {
 
         findingRepository.saveAll(toCreate);
 
-        return new Result(created, refreshed, reopened, validationFailed, validated);
+        for (Finding fresh : toCreate) {
+            timeline.recordCreated(fresh, scan, fresh.getDetectedAt() != null ? fresh.getDetectedAt() : now);
+        }
+        timeline.replaceObservations(scan, reconciled.values(), now);
+
+        return new Result(created, refreshed, reopened, validationFailed, validated, reconciled);
     }
 }

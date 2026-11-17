@@ -18,4 +18,8 @@ import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 public interface ConfigCheck {
 
     List<Finding> check(DiscoveredHost host);
+
+    default CheckOutcome evaluate(DiscoveredHost host) {
+        return CheckOutcome.of(check(host));
+    }
 }

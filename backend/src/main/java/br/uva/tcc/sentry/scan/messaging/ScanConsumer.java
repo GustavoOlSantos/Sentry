@@ -18,6 +18,9 @@ import br.uva.tcc.sentry.Asset.service.AssetUpsertService;
 import br.uva.tcc.sentry.policy.checker.ConfigFindingService;
 import br.uva.tcc.sentry.finding.factory.FindingFactory;
 import br.uva.tcc.sentry.finding.service.FindingReconciler;
+import br.uva.tcc.sentry.policy.checker.RuleEvaluationResult;
+import br.uva.tcc.sentry.policy.service.PolicyEvaluationRecorder;
+import java.time.LocalDateTime;
 import br.uva.tcc.sentry.vulnerability.domain.Vulnerability;
 import br.uva.tcc.sentry.vulnerability.repository.VulnerabilityRepository;
 import br.uva.tcc.sentry.vulnerability.nvd.VulnerabilityLookupService;
@@ -49,6 +52,7 @@ public class ScanConsumer {
     private final FindingFactory findingFactory;
     private final AssetUpsertService assetUpsertService;
     private final FindingReconciler findingReconciler;
+    private final PolicyEvaluationRecorder policyEvaluationRecorder;
 
     private final ScanRepository scanRepository;
     private final ScanExecutionGroupRepository scanExecutionGroupRepository;
@@ -120,8 +124,12 @@ public class ScanConsumer {
         result.setHosts(hosts);
 
         // 2. candidatos a finding: o que este scan observou
+        List<RuleEvaluationResult> ruleEvaluations = new ArrayList<>();
+
         for (DiscoveredHost host : hosts) {
-            result.addFindings(configFindingService.check(host, scan));
+            var outcome = configFindingService.evaluate(host, scan);
+            result.addFindings(outcome.findings());
+            ruleEvaluations.addAll(outcome.evaluations());
 
             for (var service : host.services()) {
                 if (!service.hasCpe() || service.getVersion() == null) {
@@ -156,6 +164,8 @@ public class ScanConsumer {
         var reconciliation = reconciliarFindings(scan, result, coverage);
         log.info("Findings do scan {} reconciliados: {}", scan.getId(), reconciliation);
 
+        registrarAvaliacoes(scan, ruleEvaluations, reconciliation);
+
         scan.markFinished();
         scanRepository.save(scan);
         log.info("Scan finalizado com sucesso. ID: {}, Host: {}", scanRequestReceived.scanId(), scanRequestReceived.target());
@@ -174,6 +184,14 @@ public class ScanConsumer {
             return findingReconciler.reconcile(scan, result.getFindings(), coverage);
         } catch (ObjectOptimisticLockingFailureException | DataIntegrityViolationException e) {
             throw new TransientScanException("Conflito de concorrência ao reconciliar os findings do scan " + scan.getId(), e);
+        }
+    }
+
+    private void registrarAvaliacoes(Scan scan, List<RuleEvaluationResult> evaluations, FindingReconciler.Result reconciliation) {
+        try {
+            policyEvaluationRecorder.record(scan, evaluations, reconciliation.findingsByFingerprint(), LocalDateTime.now());
+        } catch (DataIntegrityViolationException e) {
+            throw new TransientScanException("Conflito de concorrência ao registrar as avaliações de política do scan " + scan.getId(), e);
         }
     }
 

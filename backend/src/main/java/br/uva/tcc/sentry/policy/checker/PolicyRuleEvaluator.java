@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import br.uva.tcc.sentry.Asset.domain.Service;
 import br.uva.tcc.sentry.finding.domain.Finding;
 import br.uva.tcc.sentry.finding.factory.FindingFactory;
+import br.uva.tcc.sentry.policy.domain.PolicyEvaluationStatus;
 import br.uva.tcc.sentry.policy.domain.PolicyRule;
 import br.uva.tcc.sentry.policy.domain.PolicyStatus;
 import br.uva.tcc.sentry.policy.repository.PolicyRuleRepository;
@@ -62,26 +63,79 @@ public class PolicyRuleEvaluator implements ConfigCheck {
 
     @Override
     public List<Finding> check(DiscoveredHost host) {
-        List<PolicyRule> activeRules = policyRuleRepository.findActiveEnabledRules(PolicyStatus.ACTIVE);
+        return evaluate(host).findings();
+    }
 
+    @Override
+    public CheckOutcome evaluate(DiscoveredHost host) {
+        List<PolicyRule> activeRules = policyRuleRepository.findActiveEnabledRules(PolicyStatus.ACTIVE);
         if (activeRules.isEmpty()) {
-            return List.of();
+            return CheckOutcome.empty();
         }
 
         List<Finding> findings = new ArrayList<>();
+        List<RuleEvaluationResult> evaluations = new ArrayList<>();
 
         for (PolicyRule rule : activeRules) {
-            for (Service service : host.services()) {
-                if (!"open".equalsIgnoreCase(service.getState())) {
-                    continue;
-                }
+            try {
+                evaluations.add(evaluateRule(rule, host, findings));
+            } catch (RuntimeException e) {
+                evaluations.add(new RuleEvaluationResult(rule, host.asset(), PolicyEvaluationStatus.ERROR,
+                        "Falha ao avaliar a regra: " + e.getMessage(), 0, null));
+            }
+        }
+        return new CheckOutcome(findings, evaluations);
+    }
 
-                evaluate(rule, service).ifPresent(evidence ->
-                        findings.add(findingFactory.fromPolicyViolation(host, service, rule, evidence, null)));
+    private RuleEvaluationResult evaluateRule(PolicyRule rule, DiscoveredHost host, List<Finding> findingsOut) {
+        if (rule.getType() == null) {
+            return new RuleEvaluationResult(rule, host.asset(), PolicyEvaluationStatus.NOT_APPLICABLE,
+                    "A regra não define um tipo de verificação.", 0, null);
+        }
+
+        String configurationProblem = configurationProblem(rule);
+        if (configurationProblem != null) {
+            return new RuleEvaluationResult(rule, host.asset(), PolicyEvaluationStatus.ERROR,
+                    "Regra mal configurada: " + configurationProblem, 0, null);
+        }
+
+        List<Finding> violations = new ArrayList<>();
+        List<String> evidences = new ArrayList<>();
+        int openServices = 0;
+
+        for (Service service : host.services()) {
+            if (!"open".equalsIgnoreCase(service.getState())) {
+                continue;
+            }
+            openServices++;
+
+            Optional<String> evidence = evaluate(rule, service);
+            if (evidence.isPresent()) {
+                violations.add(findingFactory.fromPolicyViolation(host, service, rule, evidence.get(), null));
+                evidences.add(evidence.get());
             }
         }
 
-        return findings;
+        findingsOut.addAll(violations);
+
+        if (violations.isEmpty()) {
+            return new RuleEvaluationResult(rule, host.asset(), PolicyEvaluationStatus.COMPLIANT,
+                    "Nenhuma violação encontrada nos " + openServices + " serviço(s) aberto(s).", 0, null);
+        }
+
+        return new RuleEvaluationResult(rule, host.asset(), PolicyEvaluationStatus.NON_COMPLIANT,
+                String.join(" | ", evidences), violations.size(), violations.get(0));
+    }
+
+    private String configurationProblem(PolicyRule rule) {
+        return switch (rule.getType()) {
+            case PORT_RESTRICTION -> parsePort(rule.getExpectedValue()) == null
+                    ? "o valor esperado deve ser um número de porta (recebido: \"" + rule.getExpectedValue() + "\")."
+                    : null;
+            case FORBIDDEN_SERVICE -> (rule.getExpectedValue() == null || rule.getExpectedValue().isBlank())
+                    ? "o valor esperado deve informar o nome do serviço proibido."
+                    : null;
+        };
     }
 
     private Optional<String> evaluate(PolicyRule rule, Service service) {

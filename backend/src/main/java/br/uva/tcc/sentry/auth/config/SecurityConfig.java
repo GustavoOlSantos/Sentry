@@ -131,6 +131,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(cors.allowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        configuration.setExposedHeaders(List.of("Content-Disposition"));
         configuration.setAllowCredentials(false); // o token vai no header Authorization, não em cookie
         configuration.setMaxAge(cors.maxAgeSeconds());
 

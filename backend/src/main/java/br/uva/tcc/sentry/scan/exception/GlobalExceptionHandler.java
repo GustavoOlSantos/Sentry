@@ -12,6 +12,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import br.uva.tcc.sentry.report.exception.InvalidReportFilterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import br.uva.tcc.sentry.auth.exception.EmailAlreadyInUseException;
 import br.uva.tcc.sentry.auth.exception.InvalidCredentialsException;
 import br.uva.tcc.sentry.auth.exception.InvalidPasswordException;
@@ -83,6 +85,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidPasswordException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidPassword(InvalidPasswordException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, "Senha inválida", ex.getMessage());
+    }
+
+    // ---------------- relatórios ----------------
+
+    @ExceptionHandler(InvalidReportFilterException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidReportFilter(InvalidReportFilterException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Filtro de relatório inválido", ex.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Parâmetro inválido",
+                "O valor informado para '" + ex.getName() + "' é inválido.");
     }
 
     // ---------------- validação de entrada ----------------

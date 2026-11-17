@@ -1,5 +1,7 @@
 package br.uva.tcc.sentry.finding.service;
 
+
+import org.mockito.Mockito;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -41,7 +43,7 @@ class FindingReconcilerTest {
 
     @BeforeEach
     void setUp() {
-        reconciler = new FindingReconciler(inMemoryRepository());
+        reconciler = new FindingReconciler(inMemoryRepository(), Mockito.mock(FindingTimeline.class));
 
         asset = new Asset();
         asset.setId(UUID.randomUUID());
