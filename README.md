@@ -5,7 +5,7 @@ Plataforma acadêmica para **descoberta de ativos, identificação de vulnerabil
 <div align="center">
 
 <img src="https://skillicons.dev/icons?i=java,spring,rabbitmq,react,javascript,mysql,docker,cypress" />
-<img height="40px" src="https://upload.wikimedia.org/wikipedia/commons/7/73/Logo_nmap.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original" />
+<img height="40px" src="./screenshots/Logo_nmap.png" />
 
 </div>
 
