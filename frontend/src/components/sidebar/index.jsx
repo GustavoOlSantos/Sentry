@@ -98,7 +98,7 @@ export function SideBar() {
                 </li>
 
                 <li>
-                    <NavLink to="/reports">
+                    <NavLink to="/relatorios">
                         <i className="fas fa-file-shield"></i>
 
                         <span className="sidebar-text">
@@ -143,4 +143,4 @@ export function SideBar() {
             </ul>
         </aside>
     );
-}
+}

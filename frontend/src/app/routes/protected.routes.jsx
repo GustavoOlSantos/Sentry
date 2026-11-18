@@ -1,4 +1,5 @@
 import ProtectedRoute from "./ProtectedRoute";
+import ReportsPage from '../../features/reports';
 
 import { ROUTE_ROLES } from "../../features/auth/roles";
 
@@ -27,6 +28,7 @@ export const guard = (path, element) => (
 export const protectedRoutes = [
   { path: "/",          element: guard("/", <Home />) },
   { path: "/hosts",     element: guard("/hosts", <Hosts />) },
+      { path: '/relatorios', element: <ReportsPage /> },
   { path: "/board",     element: guard("/board", <Board />) },
   { path: "/novo-scan", element: guard("/novo-scan", <NovoScan />) },
   { path: "/scans",                 element: guard("/scans", <ScanGroups />) },
