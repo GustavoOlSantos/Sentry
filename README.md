@@ -380,7 +380,6 @@ Asset ─────────────── Finding
 - Nmap
 - NVD API 2.0
 - Docker
-- Docker Compose
 
 ---
 
@@ -966,10 +965,12 @@ O objetivo não é apenas executar uma ferramenta de segurança, mas construir u
 
 Projeto desenvolvido por:
 
-- Gustavo Santos
-- Leandro Ribeiro
-- Sophia Trotte
-- Vivian Mota
+<div align="center">
+  <a src="https://github.com/GustavoOlSantos"> <img src="./frontend/src/assets/devs/gustavo.jpg" width="20%" alt="Gustavo Santos" title="Gustavo Santos"> </a>
+  <a src="https://github.com/LeandroljRib"> <img src="./frontend/src/assets/devs/leandro.jpg" width="20%" alt="Leandro Ribeiro" title="Leandro Ribeiro">    </a>
+  <a src="https://github.com/Trotte3"> <img src="./frontend/src/assets/devs/sophia.jpg" width="20%" alt="Sophia Trotte" title="Sophia Trotte">          </a>
+  <a src="https://github.com/myrahvi"> <img src="./frontend/src/assets/devs/vivian.jpg" width="20%"  alt="Vivian Mota" title="Vivian Mota">          </a>
+</div>
 
 ---
 
