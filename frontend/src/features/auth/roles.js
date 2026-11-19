@@ -32,6 +32,7 @@ export const PERMISSIONS = {
     runScan: [ROLES.ADM, ROLES.DEV],
     editFindings: [ROLES.ADM, ROLES.DEV],
     editAssets: [ROLES.ADM, ROLES.DEV],
+    viewReport: [ROLES.ADM]
 };
 
 /**

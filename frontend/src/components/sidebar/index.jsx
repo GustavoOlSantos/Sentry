@@ -97,19 +97,21 @@ export function SideBar() {
                     </NavLink>
                 </li>
 
-                <li>
-                    <NavLink to="/relatorios">
-                        <i className="fas fa-file-shield"></i>
+                {can("viewReport") && (
+                    <li>
+                        <NavLink to="/relatorios">
+                            <i className="fas fa-file-shield"></i>
 
-                        <span className="sidebar-text">
-                            Relatórios
-                            <p>
-                                Resultados e histórico do
-                                ambiente.
-                            </p>
-                        </span>
-                    </NavLink>
-                </li>
+                            <span className="sidebar-text">
+                                Relatórios
+                                <p>
+                                    Resultados e histórico do
+                                    ambiente.
+                                </p>
+                            </span>
+                        </NavLink>
+                    </li>
+                )}
 
                 <li>
                     <NavLink to="/policies">
