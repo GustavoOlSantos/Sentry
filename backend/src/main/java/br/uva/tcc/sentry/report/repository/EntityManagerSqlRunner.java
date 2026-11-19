@@ -18,7 +18,6 @@ public class EntityManagerSqlRunner implements SqlRunner {
 
     @Override
     @Transactional(readOnly = true)
-    @SuppressWarnings("unchecked")
     public List<Object[]> query(String sql, Map<String, Object> params) {
         Query query = entityManager.createNativeQuery(sql);
         params.forEach((k, v) -> {
