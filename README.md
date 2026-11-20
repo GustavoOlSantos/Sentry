@@ -1,4 +1,4 @@
-# Sentry
+# Sentry 
 
 Plataforma acadêmica para **descoberta de ativos, identificação de vulnerabilidades, avaliação de configurações de segurança e acompanhamento de findings** em ambientes de rede controlados e autorizados.
 
@@ -22,6 +22,8 @@ Plataforma acadêmica para **descoberta de ativos, identificação de vulnerabil
 
 
 ## Sobre o projeto
+
+[![Architecture diagram](https://gitdiagram.com/diagram-badge.svg)](https://gitdiagram.com/gustavoolsantos/sentry?utm_source=readme&utm_medium=badge)
 
 O **Sentry** é um Trabalho de Conclusão de Curso (TCC) desenvolvido na linha de **desenvolvimento e segurança da informação**.
 
@@ -970,6 +972,11 @@ Projeto desenvolvido por:
   <a src="https://github.com/LeandroljRib"> <img src="./frontend/src/assets/devs/leandro.jpg" width="20%" alt="Leandro Ribeiro" title="Leandro Ribeiro">    </a>
   <a src="https://github.com/Trotte3"> <img src="./frontend/src/assets/devs/sophia.jpg" width="20%" alt="Sophia Trotte" title="Sophia Trotte">          </a>
   <a src="https://github.com/myrahvi"> <img src="./frontend/src/assets/devs/vivian.jpg" width="20%"  alt="Vivian Mota" title="Vivian Mota">          </a>
+</div>
+
+<div align="right">
+  <br>
+  <img width="150" src="./screenshots/uva.png" />
 </div>
 
 ---
