@@ -33,10 +33,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    #show-sql: true
     properties:
       hibernate:
         format_sql: true
+        # datas gravadas em UTC (a JVM também é fixada em UTC em SentryApplication)
+        jdbc:
+          time_zone: UTC
 
 nmap:
   # tempo maximo (em segundos) que um scan do Nmap pode rodar antes de
@@ -50,6 +53,9 @@ nvd:
   api-key: ${NVD_API_KEY:}
 
 sentry:
+  time:
+    # fuso em que o servidor formata datas para pessoas (PDF do relatório). O JSON sai em UTC com 'Z'.
+    display-zone: ${SENTRY_DISPLAY_ZONE:America/Sao_Paulo}
   security:
     jwt:
       # chave de assinatura HS256 (minimo 32 caracteres). Gere com: openssl rand -base64 48
@@ -74,3 +80,10 @@ management:
       # anonimo ve so o status; detalhes (banco, rabbit) apenas para ADM
       show-details: when-authorized
       roles: ADM
+
+springdoc:
+  swagger-ui:
+    # mantém o token informado em "Authorize" ao recarregar a página
+    persist-authorization: true
+    operations-sorter: method
+  default-produces-media-type: application/json

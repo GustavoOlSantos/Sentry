@@ -33,6 +33,11 @@ import org.springframework.context.annotation.Configuration;
             | `DEV`  | Leitura, tratar findings (status e responsável), executar scans e editar assets. |
             | `USER` | Somente leitura. |
 
+            ## Datas e horas
+            Todo horário (`createdAt`, `startedAt`, `detectedAt`...) é devolvido em **UTC com o sufixo `Z`** \
+(ex.: `2026-11-22T14:30:00Z`). Converta para o fuso do usuário na tela (`new Date(valor)` já faz isso). \
+Filtros de relatório (`from`/`to`) são datas (`yyyy-MM-dd`) e os dias são contados em UTC.
+
             ## Formato padrão de erro
             Erros tratados pela aplicação (e pelos filtros de segurança) devolvem JSON com `timestamp`, `status`, `error` e `message`. \
             Exceções: algumas validações feitas direto em controllers devolvem **texto puro** ou `{ "message": "..." }` e \

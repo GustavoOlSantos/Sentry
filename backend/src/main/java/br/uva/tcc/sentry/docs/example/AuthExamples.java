@@ -21,8 +21,8 @@ public final class AuthExamples {
                 "email": "admin@sentry.com",
                 "role": "ADM",
                 "active": true,
-                "createdAt": "2026-11-01T09:00:00",
-                "lastLoginAt": "2026-11-22T14:25:10"
+                "createdAt": "2026-11-01T09:00:00Z",
+                "lastLoginAt": "2026-11-22T14:25:10Z"
               }
             }
             """;
@@ -34,7 +34,7 @@ public final class AuthExamples {
               "email": "maria@sentry.com",
               "role": "DEV",
               "active": true,
-              "createdAt": "2026-11-10T10:15:00",
+              "createdAt": "2026-11-10T10:15:00Z",
               "lastLoginAt": null
             }
             """;
@@ -47,8 +47,8 @@ public final class AuthExamples {
                 "email": "admin@sentry.com",
                 "role": "ADM",
                 "active": true,
-                "createdAt": "2026-11-01T09:00:00",
-                "lastLoginAt": "2026-11-22T14:25:10"
+                "createdAt": "2026-11-01T09:00:00Z",
+                "lastLoginAt": "2026-11-22T14:25:10Z"
               },
               {
                 "id": 2,
@@ -56,7 +56,7 @@ public final class AuthExamples {
                 "email": "maria@sentry.com",
                 "role": "DEV",
                 "active": true,
-                "createdAt": "2026-11-10T10:15:00",
+                "createdAt": "2026-11-10T10:15:00Z",
                 "lastLoginAt": null
               }
             ]

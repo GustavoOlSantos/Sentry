@@ -7,6 +7,8 @@ import static br.uva.tcc.sentry.report.pdf.PdfDocument.PAGE_WIDTH;
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -49,6 +51,7 @@ public final class ReportPdfRenderer {
     private final FullReport report;
     private final PdfDocument doc;
     private final PdfImage logo;
+    private final ZoneId zone;
 
     private Page page;
     private float top;
@@ -56,17 +59,29 @@ public final class ReportPdfRenderer {
     private final List<String> tocTitles = new ArrayList<>();
     private final List<Integer> tocPages = new ArrayList<>();
 
-    private ReportPdfRenderer(FullReport report, BufferedImage logoImage, boolean compress) {
+    private ReportPdfRenderer(FullReport report, BufferedImage logoImage, boolean compress, ZoneId zone) {
         this.report = report;
+        this.zone = zone;
+        // os horários do relatório estão em UTC (sem zona); o instante real é esse mesmo valor em UTC
         this.doc = new PdfDocument("Relatório de Segurança - TC Sentry", "TC Sentry", compress,
-                report.generatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant());
+                report.generatedAt().toInstant(br.uva.tcc.sentry.config.AppTime.STORAGE_ZONE));
         this.logo = logoImage != null ? doc.addImage(logoImage) : null;
     }
 
     public static byte[] render(FullReport report, BufferedImage logoImage, boolean compress) {
-        ReportPdfRenderer renderer = new ReportPdfRenderer(report, logoImage, compress);
+        return render(report, logoImage, compress, br.uva.tcc.sentry.config.AppTime.DEFAULT_DISPLAY_ZONE);
+    }
+
+    /** {@code zone} é o fuso em que as datas e horas aparecem no PDF (os dados chegam em UTC). */
+    public static byte[] render(FullReport report, BufferedImage logoImage, boolean compress, ZoneId zone) {
+        ReportPdfRenderer renderer = new ReportPdfRenderer(report, logoImage, compress, zone);
         renderer.build();
         return renderer.doc.toBytes();
+    }
+
+    /** Horário gravado (UTC) -> horário de parede no fuso de exibição. */
+    private LocalDateTime local(LocalDateTime stored) {
+        return br.uva.tcc.sentry.config.AppTime.toZone(stored, zone);
     }
 
     private void build() {
@@ -110,7 +125,7 @@ public final class ReportPdfRenderer {
                 DATE.format(report.period().from()) + " a " + DATE.format(report.period().to())
                         + " (" + report.period().days() + (report.period().days() == 1 ? " dia" : " dias") + ", datas inclusivas)");
         infoRow(cardTop + 40, "Escopo", report.scopeDescription());
-        infoRow(cardTop + 66, "Gerado em", DATE_TIME.format(report.generatedAt()));
+        infoRow(cardTop + 66, "Gerado em", DATE_TIME.format(local(report.generatedAt())));
         infoRow(cardTop + 92, "Identificador", report.reportId());
 
         top = 450;
@@ -174,7 +189,7 @@ public final class ReportPdfRenderer {
             Page p = doc.pages().get(i);
             p.strokeColor(ReportPalette.BORDER).lineWidth(0.6f).line(M, y(PAGE_HEIGHT - 38), M + CW, y(PAGE_HEIGHT - 38));
             p.fillColor(ReportPalette.TEXT_MUTED).text(M, 24, Font.REGULAR, 7.5f,
-                    "TC Sentry  |  " + report.reportId() + "  |  Gerado em " + DATE_TIME.format(report.generatedAt()));
+                    "TC Sentry  |  " + report.reportId() + "  |  Gerado em " + DATE_TIME.format(local(report.generatedAt())));
             p.fillColor(ReportPalette.TEXT_MUTED).textRight(M + CW, 24, Font.REGULAR, 7.5f, "Página " + (i + 1) + " de " + total);
         }
     }
@@ -701,7 +716,7 @@ public final class ReportPdfRenderer {
                     Cell.of(typeName(f.type())),
                     Cell.colored(statusName(f.status()), ReportPalette.status(f.status())),
                     Cell.of(asset),
-                    Cell.of(f.detectedAt() == null ? "-" : DATE.format(f.detectedAt()))));
+                    Cell.of(f.detectedAt() == null ? "-" : DATE.format(local(f.detectedAt())))));
         }
         table(List.of(Col.left("Título", 6), Col.left("Severidade", 2), Col.left("Tipo", 2.4f), Col.left("Status", 2.4f),
                 Col.left("Ativo", 2.6f), Col.left("Detecção", 2)), rows);

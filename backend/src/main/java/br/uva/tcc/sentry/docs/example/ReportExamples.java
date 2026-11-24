@@ -113,7 +113,7 @@ public final class ReportExamples {
                   "assetHostname": "srv-web-01",
                   "port": 22,
                   "protocol": "tcp",
-                  "detectedAt": "2026-11-05T08:05:00"
+                  "detectedAt": "2026-11-05T08:05:00Z"
                 }
               ]
             }

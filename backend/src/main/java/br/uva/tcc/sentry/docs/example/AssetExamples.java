@@ -12,8 +12,8 @@ public final class AssetExamples {
                 "macAddress": "00:1A:2B:3C:4D:5E",
                 "operatingSystem": "Ubuntu 22.04",
                 "status": "UNHEALTHY",
-                "firstSeenAt": "2026-11-05T08:00:00",
-                "lastSeenAt": "2026-11-22T13:40:00",
+                "firstSeenAt": "2026-11-05T08:00:00Z",
+                "lastSeenAt": "2026-11-22T13:40:00Z",
                 "services": [
                   {
                     "id": "a1d4f0c2-7b9e-4c3a-8f21-5e6d7c8b9a01",
@@ -39,7 +39,7 @@ public final class AssetExamples {
                     "status": "OPEN",
                     "title": "CVE-2023-38408 em OpenSSH 8.9p1",
                     "description": "Execução remota de código via ssh-agent encaminhado.",
-                    "detectedAt": "2026-11-05T08:05:00",
+                    "detectedAt": "2026-11-05T08:05:00Z",
                     "resolvedAt": null,
                     "evidence": "22/tcp open ssh OpenSSH 8.9p1"
                   }
@@ -56,8 +56,8 @@ public final class AssetExamples {
               "macAddress": "00:1A:2B:3C:4D:5E",
               "operatingSystem": "Ubuntu 22.04",
               "status": "UNHEALTHY",
-              "firstSeenAt": "2026-11-05T08:00:00",
-              "lastSeenAt": "2026-11-22T13:40:00",
+              "firstSeenAt": "2026-11-05T08:00:00Z",
+              "lastSeenAt": "2026-11-22T13:40:00Z",
               "services": [
                 {
                   "id": "a1d4f0c2-7b9e-4c3a-8f21-5e6d7c8b9a01",
@@ -84,8 +84,8 @@ public final class AssetExamples {
                 "macAddress": "00:1A:2B:3C:4D:5E",
                 "operatingSystem": "Ubuntu 22.04",
                 "status": "UNHEALTHY",
-                "firstSeenAt": "2026-11-05T08:00:00",
-                "lastSeenAt": "2026-11-22T13:40:00",
+                "firstSeenAt": "2026-11-05T08:00:00Z",
+                "lastSeenAt": "2026-11-22T13:40:00Z",
                 "servicesCount": 4,
                 "findingsCount": 3
               }
@@ -100,8 +100,8 @@ public final class AssetExamples {
               "macAddress": "00:1A:2B:3C:4D:5E",
               "operatingSystem": "Ubuntu 22.04",
               "status": "UP",
-              "firstSeenAt": "2026-11-05T08:00:00",
-              "lastSeenAt": "2026-11-22T13:40:00"
+              "firstSeenAt": "2026-11-05T08:00:00Z",
+              "lastSeenAt": "2026-11-22T13:40:00Z"
             }
             """;
 

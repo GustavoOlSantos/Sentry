@@ -17,8 +17,8 @@ public final class PolicyExamples {
               "name": "Hardening de servidores",
               "description": "Serviços e portas que não devem estar expostos em servidores de produção.",
               "status": "ACTIVE",
-              "createdAt": "2026-11-10T10:00:00",
-              "updatedAt": "2026-11-10T10:00:00"
+              "createdAt": "2026-11-10T10:00:00Z",
+              "updatedAt": "2026-11-10T10:00:00Z"
             }
             """;
 
@@ -29,8 +29,8 @@ public final class PolicyExamples {
                 "name": "Hardening de servidores",
                 "description": "Serviços e portas que não devem estar expostos em servidores de produção.",
                 "status": "ACTIVE",
-                "createdAt": "2026-11-10T10:00:00",
-                "updatedAt": "2026-11-10T10:00:00"
+                "createdAt": "2026-11-10T10:00:00Z",
+                "updatedAt": "2026-11-10T10:00:00Z"
               }
             ]
             """;
@@ -68,8 +68,8 @@ public final class PolicyExamples {
                 "name": "Hardening de servidores",
                 "description": "Serviços e portas que não devem estar expostos em servidores de produção.",
                 "status": "ACTIVE",
-                "createdAt": "2026-11-10T10:00:00",
-                "updatedAt": "2026-11-10T10:00:00"
+                "createdAt": "2026-11-10T10:00:00Z",
+                "updatedAt": "2026-11-10T10:00:00Z"
               },
               "name": "Telnet proibido",
               "description": "Nenhum host pode rodar telnet.",

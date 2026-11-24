@@ -3,13 +3,16 @@ package br.uva.tcc.sentry.report.service;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.ZoneId;
 
 import javax.imageio.ImageIO;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import br.uva.tcc.sentry.config.AppTime;
 import br.uva.tcc.sentry.report.DTO.FullReport;
 import br.uva.tcc.sentry.report.DTO.Period;
 import br.uva.tcc.sentry.report.ReportFilter;
@@ -23,13 +26,18 @@ public class PdfReportService {
 
     private final ReportService reportService;
     private final BufferedImage logo;
+    private final ZoneId displayZone;
 
     public record GeneratedPdf(String filename, byte[] bytes) {
     }
 
-    public PdfReportService(ReportService reportService) {
+    public PdfReportService(ReportService reportService,
+                            @Value("${sentry.time.display-zone:America/Sao_Paulo}") String displayZone) {
         this.reportService = reportService;
         this.logo = loadLogo();
+        this.displayZone = displayZone == null || displayZone.isBlank()
+                ? AppTime.DEFAULT_DISPLAY_ZONE
+                : ZoneId.of(displayZone);
     }
 
     public GeneratedPdf generate(ReportFilter filter) {
@@ -37,7 +45,7 @@ public class PdfReportService {
     }
 
     public GeneratedPdf render(FullReport report) {
-        return new GeneratedPdf(filename(report.period()), ReportPdfRenderer.render(report, logo, true));
+        return new GeneratedPdf(filename(report.period()), ReportPdfRenderer.render(report, logo, true, displayZone));
     }
 
     public static String filename(Period period) {

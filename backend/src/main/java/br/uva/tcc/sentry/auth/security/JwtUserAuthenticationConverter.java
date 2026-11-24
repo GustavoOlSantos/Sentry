@@ -70,7 +70,7 @@ public class JwtUserAuthenticationConverter implements Converter<Jwt, AbstractAu
         }
 
         Instant passwordChangedAt = user.getPasswordChangedAt()
-                .atZone(ZoneId.systemDefault())
+                .atZone(br.uva.tcc.sentry.config.AppTime.STORAGE_ZONE)
                 .toInstant()
                 .truncatedTo(ChronoUnit.SECONDS);
 
