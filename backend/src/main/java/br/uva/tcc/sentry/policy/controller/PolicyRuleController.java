@@ -7,12 +7,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import br.uva.tcc.sentry.docs.api.PolicyRuleApi;
 import br.uva.tcc.sentry.policy.domain.PolicyRule;
 import br.uva.tcc.sentry.policy.service.PolicyRuleService;
 
 @RestController
 @RequestMapping("/policyRule")
-public class PolicyRuleController {
+public class PolicyRuleController implements PolicyRuleApi {
 
     private final PolicyRuleService policyRuleService;
 
@@ -20,18 +21,21 @@ public class PolicyRuleController {
         this.policyRuleService = policyRuleService;
     }
 
+    @Override
     @PostMapping
     public ResponseEntity<PolicyRule> createPolicyRule(@RequestBody PolicyRule policyRule) {
         PolicyRule createdRule = policyRuleService.createPolicyRule(policyRule);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRule);
     }
 
+    @Override
     @GetMapping
     public ResponseEntity<List<PolicyRule>> findAllPolicyRules() {
         List<PolicyRule> rules = policyRuleService.findAllPolicyRules();
         return ResponseEntity.ok(rules);
     }
 
+    @Override
     @GetMapping("/{id}")
     public ResponseEntity<PolicyRule> findById(@PathVariable Long id) {
         Optional<PolicyRule> policyRule = policyRuleService.findById(id);
@@ -39,6 +43,7 @@ public class PolicyRuleController {
                          .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @Override
     @PutMapping("/{id}")
     public ResponseEntity<PolicyRule> editPolicyRule(@PathVariable Long id, @RequestBody PolicyRule policyRule) {
         Optional<PolicyRule> existingRule = policyRuleService.findById(id);
@@ -50,6 +55,7 @@ public class PolicyRuleController {
         return ResponseEntity.notFound().build();
     }
 
+    @Override
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePolicyRule(@PathVariable Long id) {
         Optional<PolicyRule> policyRule = policyRuleService.findById(id);

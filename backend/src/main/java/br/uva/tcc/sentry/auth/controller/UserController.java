@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.uva.tcc.sentry.docs.api.UserApi;
 import br.uva.tcc.sentry.auth.DTO.CreateUserRequest;
 import br.uva.tcc.sentry.auth.DTO.ResetPasswordRequest;
 import br.uva.tcc.sentry.auth.DTO.UpdateUserRequest;
@@ -26,37 +27,43 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
-public class UserController {
+public class UserController implements UserApi {
 
     private final UserService userService;
 
+    @Override
     @GetMapping
     public List<UserResponse> findAll() {
         return userService.findAll();
     }
 
+    @Override
     @GetMapping("/{id}")
     public UserResponse findById(@PathVariable Long id) {
         return userService.findById(id);
     }
 
+    @Override
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse create(@Valid @RequestBody CreateUserRequest request) {
         return userService.create(request);
     }
 
+    @Override
     @PutMapping("/{id}")
     public UserResponse update(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
         return userService.update(id, request);
     }
 
+    @Override
     @PutMapping("/{id}/password")
     public ResponseEntity<Void> resetPassword(@PathVariable Long id, @Valid @RequestBody ResetPasswordRequest request) {
         userService.resetPassword(id, request);
         return ResponseEntity.noContent().build();
     }
 
+    @Override
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         userService.delete(id);

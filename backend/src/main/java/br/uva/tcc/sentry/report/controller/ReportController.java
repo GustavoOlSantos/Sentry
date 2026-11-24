@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.uva.tcc.sentry.docs.api.ReportApi;
 import br.uva.tcc.sentry.finding.domain.FindingStatus;
 import br.uva.tcc.sentry.finding.domain.FindingType;
 import br.uva.tcc.sentry.report.DTO.ComplianceReportResponse;
@@ -35,7 +36,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/reports")
-public class ReportController {
+public class ReportController implements ReportApi {
 
     private final ReportService reportService;
     private final RiskEvolutionService evolutionService;
@@ -43,6 +44,7 @@ public class ReportController {
     private final ComplianceReportService complianceService;
     private final PdfReportService pdfService;
 
+    @Override
     @GetMapping("/summary")
     public ReportSummaryResponse summary(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -57,6 +59,7 @@ public class ReportController {
         return reportService.summary(filter(from, to, assetId, scanId, scanGroupId, severity, type, status, policyId));
     }
 
+    @Override
     @GetMapping("/risk/evolution")
     public RiskEvolutionResponse riskEvolution(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -70,6 +73,7 @@ public class ReportController {
         return evolutionService.evolution(filter(from, to, assetId, scanId, scanGroupId, severity, type, null, null), groupBy);
     }
 
+    @Override
     @GetMapping("/findings/distribution")
     public FindingsDistributionResponse distribution(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -83,6 +87,7 @@ public class ReportController {
         return reportService.distribution(filter(from, to, assetId, scanId, scanGroupId, severity, type, status, null));
     }
 
+    @Override
     @GetMapping("/findings/relevant")
     public RelevantFindingsResponse relevantFindings(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -97,6 +102,7 @@ public class ReportController {
         return reportService.relevantFindings(filter(from, to, assetId, scanId, scanGroupId, severity, type, status, null), limit);
     }
 
+    @Override
     @GetMapping("/mttr")
     public MttrReportResponse mttr(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -109,6 +115,7 @@ public class ReportController {
         return mttrService.report(filter(from, to, assetId, scanId, scanGroupId, severity, type, null, null));
     }
 
+    @Override
     @GetMapping("/compliance")
     public ComplianceReportResponse compliance(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -120,6 +127,7 @@ public class ReportController {
         return complianceService.report(filter(from, to, assetId, scanId, scanGroupId, null, null, null, policyId));
     }
 
+    @Override
     @GetMapping("/pdf")
     public ResponseEntity<byte[]> pdf(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import br.uva.tcc.sentry.docs.api.FindingApi;
 import br.uva.tcc.sentry.finding.DTO.FindingBoardResponse;
 import br.uva.tcc.sentry.finding.DTO.UpdateFindingAssigneeRequest;
 import br.uva.tcc.sentry.finding.DTO.UpdateFindingStatusRequest;
@@ -18,14 +19,16 @@ import lombok.RequiredArgsConstructor;
 @RestController 
 @RequiredArgsConstructor
 @RequestMapping("/findings")
-public class FindingController {
+public class FindingController implements FindingApi {
     private final FindingService findingService;
 
+    @Override
     @GetMapping("")
     public List<FindingBoardResponse> findAll(){
         return findingService.findAll();
     }
 
+    @Override
     @PostMapping("/{findingId}/status")
     public ResponseEntity<?> updateFindingStatus(@PathVariable UUID findingId, @RequestBody UpdateFindingStatusRequest request, Authentication authentication) {
         FindingStatus newStatus = request.status();
@@ -41,6 +44,7 @@ public class FindingController {
         return ResponseEntity.ok(findingService.updateFindingStatus(findingId, newStatus, justification, userId));
     }
 
+    @Override
     @PatchMapping("/{findingId}/assignee")
     public ResponseEntity<?> updateFindingAssignee(@PathVariable UUID findingId, @RequestBody UpdateFindingAssigneeRequest request) {
         var assigneeId = request.assigneeId();

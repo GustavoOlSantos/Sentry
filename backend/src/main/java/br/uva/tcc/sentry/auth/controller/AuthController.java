@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.uva.tcc.sentry.docs.api.AuthApi;
 import br.uva.tcc.sentry.auth.DTO.ChangePasswordRequest;
 import br.uva.tcc.sentry.auth.DTO.LoginRequest;
 import br.uva.tcc.sentry.auth.DTO.LoginResponse;
@@ -21,21 +22,24 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
-public class AuthController {
+public class AuthController implements AuthApi {
 
     private final AuthService authService;
 
+    @Override
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
 
+    @Override
     @GetMapping("/me")
     public UserResponse me(Authentication authentication) {
         return authService.me(currentUserId(authentication));
     }
 
     /** Troca a senha de quem está logado; depois disso os tokens antigos deixam de valer. */
+    @Override
     @PutMapping("/me/password")
     public ResponseEntity<Void> changePassword(Authentication authentication,
                                                @Valid @RequestBody ChangePasswordRequest request) {

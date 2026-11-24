@@ -1,5 +1,6 @@
 package br.uva.tcc.sentry.scan.controller;
 
+import br.uva.tcc.sentry.docs.api.ScanApi;
 import br.uva.tcc.sentry.scan.DTO.ScanDetailResponse;
 import br.uva.tcc.sentry.scan.DTO.ScanRequest;
 import br.uva.tcc.sentry.scan.DTO.ScanResponse;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/scan")
-public class ScanController{
+public class ScanController implements ScanApi {
 
    private final ScanService scanService;
    private final ScanQueryService scanQueryService;
@@ -32,27 +33,32 @@ public class ScanController{
     }
 
     /** Os scans mais recentes (de qualquer grupo), em formato resumido. */
+    @Override
     @GetMapping()
     public List<ScanSummaryResponse> getAllScans(){
        return scanQueryService.findRecentScans();
     }
 
     /** Detalhes de um scan: comando, avisos, ativos encontrados e findings detectados. */
+    @Override
     @GetMapping("/id/{id}")
     public ScanDetailResponse getSingleScanByID(@PathVariable UUID id){
         return scanQueryService.findScanDetail(id);
     }
 
+    @Override
     @DeleteMapping("/id/{id}")
     public void deleteById(@PathVariable UUID id){
         scanService.deleteById(id);
     }
 
+    @Override
     @PutMapping("/{id}")
-    public Scan editById(Scan scan){
+    public Scan editById(@PathVariable UUID id, @RequestBody Scan scan){
         return scanService.editScan(scan);
     }
 
+    @Override
     @PostMapping("/exec")
     public ResponseEntity<?> executeScan(@RequestBody ScanRequest request){
         if (request.targets() == null || request.targets().isBlank()) {

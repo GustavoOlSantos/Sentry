@@ -1,5 +1,6 @@
 package br.uva.tcc.sentry.scan.controller;
 
+import br.uva.tcc.sentry.docs.api.ScanGroupApi;
 import br.uva.tcc.sentry.scan.DTO.ScanGroupDetailResponse;
 import br.uva.tcc.sentry.scan.DTO.ScanGroupSummaryResponse;
 import br.uva.tcc.sentry.scan.domain.ScanExecutionGroup;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/scanGroup")
-public class ScanExecGroupController{
+public class ScanExecGroupController implements ScanGroupApi {
 
     private final ScanExecGroupService scanGroupService;
     private final ScanQueryService scanQueryService;
@@ -24,24 +25,28 @@ public class ScanExecGroupController{
     }
 
     /** Grupos mais recentes, com status derivado, contagem de scans por status, ativos e findings. */
+    @Override
     @GetMapping()
     public List<ScanGroupSummaryResponse> getAllScansGroups(){
        return scanQueryService.findGroups();
     }
 
     /** Um grupo e a lista de scans individuais dele. */
+    @Override
     @GetMapping("/id/{id}")
     public ScanGroupDetailResponse getScanGroupByID(@PathVariable UUID id){
         return scanQueryService.findGroupDetail(id);
     }
 
+    @Override
     @DeleteMapping("/id/{id}")
     public void deleteById(@PathVariable UUID id){
         scanGroupService.deleteById(id);
     }
 
+    @Override
     @PutMapping("/{id}")
-    public ScanExecutionGroup editById(ScanExecutionGroup scan){
+    public ScanExecutionGroup editById(@PathVariable UUID id, @RequestBody ScanExecutionGroup scan){
         return scanGroupService.editScan(scan);
     }
 }
