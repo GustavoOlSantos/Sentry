@@ -18,6 +18,7 @@ import org.springframework.core.retry.RetryPolicy;
 
 import br.uva.tcc.sentry.scan.exception.PermanentScanException;
 import br.uva.tcc.sentry.scan.exception.TransientScanException;
+import br.uva.tcc.sentry.scan.services.ScanTerminationService;
 
 @Configuration
 public class ScanRabbitRetryConfig {
@@ -27,7 +28,8 @@ public class ScanRabbitRetryConfig {
     @Bean
     public SimpleRabbitListenerContainerFactory scanListenerContainerFactory(
             SimpleRabbitListenerContainerFactoryConfigurer configurer,
-            ConnectionFactory connectionFactory) {
+            ConnectionFactory connectionFactory,
+            ScanTerminationService scanTerminationService) {
 
         var factory = new SimpleRabbitListenerContainerFactory();
         configurer.configure(factory, connectionFactory);
@@ -67,6 +69,14 @@ public class ScanRabbitRetryConfig {
                 properties.getReceivedRoutingKey(),
                 cause
             );
+
+            // sem isto o scan ficaria RUNNING para sempre: a mensagem vai para a DLQ e ninguém mais cuida dele.
+            // Falha aqui não pode impedir o envio à DLQ, por isso é só registrada.
+            try {
+                scanTerminationService.registrarFalhaDefinitiva(message, cause);
+            } catch (RuntimeException e) {
+                log.error("Não foi possível marcar o scan como FAILED antes de enviar a mensagem à DLQ.", e);
+            }
 
             throw new AmqpRejectAndDontRequeueException(
                 "Falha definitiva ou esgotamento das tentativas", cause);

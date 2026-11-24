@@ -9,6 +9,7 @@ import br.uva.tcc.sentry.scan.domain.ScanResult;
 import br.uva.tcc.sentry.scan.domain.ScanStatus;
 import br.uva.tcc.sentry.scan.domain.DiscoveredHost;
 import br.uva.tcc.sentry.scan.scanner.ScanEngine;
+import br.uva.tcc.sentry.scan.services.ScanTerminationService;
 
 import br.uva.tcc.sentry.scan.exception.PermanentScanException;
 import br.uva.tcc.sentry.scan.exception.TransientScanException;
@@ -58,6 +59,7 @@ public class ScanConsumer {
     private final ScanExecutionGroupRepository scanExecutionGroupRepository;
     private final ScanAssetRepository scanAssetRepository;
     private final VulnerabilityRepository vulnerabilityRepository;
+    private final ScanTerminationService scanTerminationService;
     
     
     @RabbitListener(queues = RabbitMQConfig.SCAN_QUEUE, containerFactory = "scanListenerContainerFactory")
@@ -218,35 +220,17 @@ public class ScanConsumer {
                 });
     }
 
+    /** O grupo só termina quando nenhum scan dele está PENDING nem RUNNING (antes só olhava PENDING). */
     public void verificaGrupo(ScanExecutionGroup scanGroup){
-        boolean hasActiveScans = scanRepository.existsScansByGroupIdAndStatusIn(
-            scanGroup.getId(),
-            List.of(ScanStatus.PENDING)
-        );
+        scanTerminationService.closeGroupIfFinished(scanGroup);
+    }
 
-        if (!hasActiveScans) {
-            scanGroup.markFinished();
-            scanExecutionGroupRepository.save(scanGroup);
+    /** O limite de tamanho da mensagem e o encerramento do grupo ficam em {@link ScanTerminationService}. */
+    private void finalizarScanComFalha(ScanMessage scanRequestReceived, Exception exception) {
+        boolean marcado = scanTerminationService.markFailed(scanRequestReceived.scanId(), exception.getMessage());
+
+        if (!marcado) {
+            log.warn("O scan {} não foi alterado: inexistente ou já em estado terminal.", scanRequestReceived.scanId());
         }
     }
-
-    private void finalizarScanComFalha(ScanMessage scanRequestReceived, Exception exception) {
-
-    Scan scan = scanRepository.findWithExecGroupById(scanRequestReceived.scanId()).orElseThrow(() -> new PermanentScanException("Scan não encontrado: " + scanRequestReceived.scanId()));
-
-    if (scan.getStatus() == ScanStatus.COMPLETED
-            || scan.getStatus() == ScanStatus.NOT_FOUND
-            || scan.getStatus() == ScanStatus.FAILED) {
-        log.warn("O scan {} já está em um estado terminal: {}.", scan.getId(), scan.getStatus());
-        return;
-    }
-
-    scan.setErrorMessage(exception.getMessage());
-    scan.markFailed();
-    scanRepository.save(scan);
-
-    log.error("Scan {} finalizado com falha. Motivo: {}", scan.getId(), exception.getMessage());
-
-    verificaGrupo(scan.getExecGroup());
-}
 }
